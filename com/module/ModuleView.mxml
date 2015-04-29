@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%">
+	
+	
+	<mx:Script>
+		<![CDATA[
+			
+			
+			[Bindable] private var component:IModuleComponent;
+			
+			public var view:String;
+			public var viewState:String;
+			
+			/**
+			 * name of the swf representing the module, without .swf
+			 * */
+			public var moduleSource:String;
+			
+			public function load( view:String='', viewState:String='' ):void {
+				if(ldr == null){
+					callLater(load,[view, viewState]);
+				}
+				else {
+					this.view = view;
+					this.viewState = viewState;
+					
+					if(ldr.url == ''){
+						ldr.applicationDomain = ApplicationDomain.currentDomain;
+						pb.source = ldr;
+						ldr.url = moduleSource.indexOf('.swf') == -1 ? moduleSource+'.swf' : moduleSource;
+					}
+					else {
+						onReady();
+					}
+				}
+			}
+			
+			private function onReady():void {
+				if(ldr.child == null){	// check if module is loaded
+					callLater(onReady);
+				}
+				else if(component != null){	// if module is already loaded, call the 'load' function on that module
+					onVsChange();
+				}
+				else {	// module is ready, assign to 'component'
+					component = ModuleComponent(ldr.child);
+					vs.selectedIndex = 1;
+				}
+			}
+			
+			private function onVsChange():void {
+				component.load( view, viewState );
+			}
+			
+			
+		]]>
+	</mx:Script>
+	
+	<mx:ViewStack id="vs" width="100%" height="100%" creationPolicy="all" change="onVsChange()">
+		<mx:HBox width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+			<mx:ProgressBar id="pb" mode="event" label="%3 %%" enabled="true" width="200" 
+				color="#000000"
+				themeColor="#FF0000" barColor="#FF0000"/>
+		</mx:HBox>
+		
+		<mx:ModuleLoader id="ldr" url="" width="100%" height="100%" ready="onReady()"
+			error="null//Factory.instance.onError(event)"/>
+	</mx:ViewStack>
+	
+	
+</mx:VBox>

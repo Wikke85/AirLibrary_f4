@@ -1,0 +1,389 @@
+package com.prosteps
+{
+	
+	
+	
+	import dialogs.ChoiceDialog2;
+	import dialogs.ConfirmDialog2;
+	import dialogs.InputDialog2;
+	import dialogs.InputDialog_new;
+	import dialogs.MessageDialog2;
+	import dialogs.ProgressDialog;
+	
+	import flash.display.DisplayObject;
+	import flash.events.Event;
+	import flash.events.EventDispatcher;
+	import flash.events.IEventDispatcher;
+	
+	import mx.collections.ArrayCollection;
+	import mx.core.Application;
+	import mx.managers.PopUpManager;
+	
+	// use this events to enable/disable main application if wanted
+	[Event(name="showDialog", type="flash.events.Event")]
+	[Event(name="hideDialog", type="flash.events.Event")]
+	
+	public class Dialogs2 extends EventDispatcher {
+		
+		public static const TYPE_WARNING:	String = 'warning';
+		public static const TYPE_ERROR:		String = 'error';
+		public static const TYPE_HELP:		String = 'help';
+		public static const TYPE_INFO:		String = 'info';
+		public static const TYPE_ABOUT:		String = 'about';
+		public static const TYPE_UNKNOWN:	String = 'unknown';
+		
+		//message
+		private var _dlgMessage:MessageDialog2;
+		
+		//ok-cancel
+		private var _dlgConfirm:ConfirmDialog2;
+		private var _okHandlerFunction:Function;
+		private var _cancelHandlerFunction:Function;
+		
+		//yes-no-cancel
+		private var _dlgChoice:ChoiceDialog2;
+		private var _Choise1Function:Function;
+		private var _Choise2Function:Function;
+		private var _cancelChoiseFunction:Function;
+		
+		//input
+		private var _dlgInput:InputDialog2;
+		private var _dlgInputNew:InputDialog_new;
+		private var _inputHandlerFunction:Function;
+		
+		
+		//
+		// constructor
+		//
+		public function Dialogs2() {
+			super();
+		}
+		
+		
+		private static var _instance:Dialogs2;
+		
+		// Viva el singleton!
+		public static function get instance():Dialogs2 {
+			if(_instance == null){
+				_instance = new Dialogs2;
+			}
+			return _instance;
+		}
+		
+		
+		private var messages:ArrayCollection = new ArrayCollection;
+		
+		
+		private function showMsg():void {
+			
+			
+			_dlgMessage.open();
+			_dlgMessage.reset();
+			
+			//_dlgMessage.nativeWindow.x = (Application.application.width  - _dlgMessage.width )/2;
+			//_dlgMessage.nativeWindow.y = (Application.application.height - _dlgMessage.height)/2;
+			
+			_dlgMessage.centerWindow();
+			
+			_dlgMessage.aTitle = messages[0].title;
+			_dlgMessage.aMessage = messages[0].message;
+			_dlgMessage.aType = messages[0].type;
+			
+		}
+		
+		private function onMsgConfirm(event:Event):void {
+			messages.removeItemAt(0);
+			if(messages.length > 0){
+				showMsg();
+			}
+			else {
+				dispatchEvent(new Event('hideDialog'));
+			}
+		}
+		
+		
+		
+		/* Message 'OK' */
+		public function message(message:String, title:String = 'Message', type:String = 'INFO'): void {
+			
+			messages.addItem({message: message, title: title, type: type});
+			
+			if(_dlgMessage == null){
+				_dlgMessage = new MessageDialog2;
+				//_dlgMessage.Factory = this;
+				
+				//_dlgMessage.open(true);
+				_dlgMessage.addEventListener('confirmation', onMsgConfirm, false, 0, true);
+			}
+			
+			showMsg();
+			dispatchEvent(new Event('showDialog'));
+		}
+		
+		
+		/* ErrorMessage 'OK' */
+		public function error(errorMessage:String, title:String = 'Error'): void {
+			message(errorMessage, title, 'error');
+		}
+		
+		
+		/* Message 'OK','Cancel' */
+		public function msgOkCancel(message:String, title:String, okHandler:Function, cancelHandler:Function = null): void {
+			
+			_okHandlerFunction = okHandler;
+			_cancelHandlerFunction = cancelHandler;
+			
+			if(_dlgConfirm == null){
+				_dlgConfirm = new ConfirmDialog2;
+				//_dlgConfirm.Factory = this;
+				
+				//_dlgConfirm.open(true);
+			}
+			
+			_dlgConfirm.open();
+			_dlgConfirm.reset();
+			
+			//_dlgConfirm.nativeWindow.x = (Application.application.width  - _dlgConfirm.width )/2;
+			//_dlgConfirm.nativeWindow.y = (Application.application.height - _dlgConfirm.height)/2;
+			
+			_dlgConfirm.centerWindow();
+			
+			//PopUpManager.addPopUp(_dlgConfirm, DisplayObject(Application.application), true, null);
+			
+			_dlgConfirm.aTitle = title;
+			_dlgConfirm.aMessage = message;
+			_dlgConfirm.aType = 'help';
+			//PopUpManager.centerPopUp(_dlgConfirm);
+			
+			_dlgConfirm.addEventListener('okEvent', okHandlerInternal, false, 0.0, true);
+			_dlgConfirm.addEventListener('cancelEvent', cancelHandlerInternal, false, 0.0, true);
+			
+			dispatchEvent(new Event('showDialog'));
+		}
+		
+		private function okHandlerInternal(event:Event):void {
+			dispatchEvent(new Event('hideDialog'));
+			_dlgConfirm.removeEventListener('okEvent', okHandlerInternal);
+			_dlgConfirm.removeEventListener('cancelEvent', cancelHandlerInternal);
+			_okHandlerFunction();
+		}
+		
+		private function cancelHandlerInternal(event:Event):void {
+			dispatchEvent(new Event('hideDialog'));
+			_dlgConfirm.removeEventListener('okEvent', okHandlerInternal);
+			_dlgConfirm.removeEventListener('cancelEvent', cancelHandlerInternal);
+			if(_cancelHandlerFunction != null) _cancelHandlerFunction();
+		}
+		
+		
+		
+		/* Message 'Yes','No','Cancel' */
+		public function msgChoice(message:String, title:String, 
+			choise1Prompt:String, choise1Handler:Function, 
+			choise2Prompt:String, choise2Handler:Function, 
+			cancelHandler:Function=null
+		):void {
+			_Choise1Function = choise1Handler;
+			_Choise2Function = choise2Handler;
+			_cancelChoiseFunction = cancelHandler;
+			
+			if(_dlgChoice == null){
+				_dlgChoice = new ChoiceDialog2;
+				//_dlgChoice.Factory = this;
+				
+				//_dlgChoice.open(true);
+			}
+			
+			_dlgChoice.open();
+			_dlgChoice.reset();
+			
+			//_dlgChoice.nativeWindow.x = (Application.application.width  - _dlgChoice.width )/2;
+			//_dlgChoice.nativeWindow.y = (Application.application.height - _dlgChoice.height)/2;
+			
+			_dlgChoice.centerWindow();
+			
+			//PopUpManager.addPopUp(_dlgChoice, DisplayObject(Application.application), true, null);
+			
+			_dlgChoice.aTitle = title;
+			_dlgChoice.aMessage = message;
+			
+			_dlgChoice.aChoise1 = choise1Prompt != null && choise1Prompt != '' ? choise1Prompt : 'Yes';
+			_dlgChoice.aChoise2 = choise2Prompt != null && choise2Prompt != '' ? choise2Prompt : 'No';
+			
+			_dlgChoice.aType = 'help';
+			//PopUpManager.centerPopUp(_dlgChoice);
+			
+			
+			_dlgChoice.addEventListener('choice1Event', internal_choise1Handler, false, 0.0, true);
+			_dlgChoice.addEventListener('choice2Event', internal_choise2Handler, false, 0.0, true);
+			_dlgChoice.addEventListener('cancelEvent', internal_cancelHandler, false, 0.0, true);
+			
+			dispatchEvent(new Event('showDialog'));
+		}
+		
+		private function internal_choise1Handler(event:Event):void {
+			dispatchEvent(new Event('hideDialog'));
+			_dlgChoice.removeEventListener('choice1Event', internal_choise1Handler);
+			_dlgChoice.removeEventListener('choice2Event', internal_choise2Handler);
+			_dlgChoice.removeEventListener('cancelEvent', internal_cancelHandler);
+			if(_Choise1Function != null)	_Choise1Function();
+		}
+		
+		private function internal_choise2Handler(event:Event):void {
+			dispatchEvent(new Event('hideDialog'));
+			_dlgChoice.removeEventListener('choice1Event', internal_cancelHandler);
+			_dlgChoice.removeEventListener('choice2Event', internal_choise2Handler);
+			_dlgChoice.removeEventListener('cancelEvent', internal_cancelHandler);
+			if(_Choise2Function != null)	_Choise2Function();
+		}
+		
+		private function internal_cancelHandler(event:Event):void {
+			dispatchEvent(new Event('hideDialog'));
+			_dlgChoice.removeEventListener('choice1Event', internal_cancelHandler);
+			_dlgChoice.removeEventListener('choice2Event', internal_choise2Handler);
+			_dlgChoice.removeEventListener('cancelEvent', internal_cancelHandler);
+			if(_cancelChoiseFunction != null)	_cancelChoiseFunction();
+		}
+		
+		
+		
+		public function msgInput(message:String, title:String, inputHandler:Function, previousValue:String=''): void {
+			
+			_inputHandlerFunction = inputHandler;
+			
+			if(_dlgInput == null){
+				_dlgInput = new InputDialog2;
+				//_dlgInput.Factory = this;
+				
+				//_dlgInput.open(true);
+			}
+			_dlgInput.open();
+			_dlgInput.reset();
+			
+			//_dlgInput.nativeWindow.x = (Application.application.width  - _dlgInput.width )/2;
+			//_dlgInput.nativeWindow.y = (Application.application.height - _dlgInput.height)/2;
+			
+			_dlgInput.centerWindow();
+			
+			//PopUpManager.addPopUp(_dlgInput, DisplayObject(Application.application), true, null);
+			
+			_dlgInput.aTitle = title;
+			_dlgInput.aMessage = message;
+			_dlgInput.edt.text = previousValue;
+			_dlgInput.aType = 'help';
+			//PopUpManager.centerPopUp(_dlgInput);
+			
+			_dlgInput.addEventListener('okEvent', inputOkHandlerInternal, false, 0.0, true);
+			_dlgInput.addEventListener('cancelEvent', inputCancelHandlerInternal, false, 0.0, true);
+			
+			dispatchEvent(new Event('showDialog'));
+			
+		}
+		
+		private function inputOkHandlerInternal(event:Event):void {
+			dispatchEvent(new Event('hideDialog'));
+			_dlgInput.removeEventListener('okEvent', inputOkHandlerInternal);
+			_dlgInput.removeEventListener('cancelEvent', inputCancelHandlerInternal);
+			_inputHandlerFunction(_dlgInput.edt.text);
+		}
+		
+		private function inputCancelHandlerInternal(event:Event):void {
+			dispatchEvent(new Event('hideDialog'));
+			_dlgInput.removeEventListener('okEvent', inputOkHandlerInternal);
+			_dlgInput.removeEventListener('cancelEvent', inputCancelHandlerInternal);
+			//_inputHandlerFunction(event);
+		}
+		
+		
+		
+		
+		
+		/**
+		 * Display a popup with a TextInput field
+		 * parameters:
+		 * 	title:		a title for the popup
+		 * 	message:	text that comes with the inputfield, containing user instructions on what to enter
+		 * 	inputHandler:	function that gets called when user clicks 'Ok', takes a string as parameter containing the entered value
+		 * 	previousValue:	initial TextInput value (for when some data is being replaced/updated)
+		 * 	validate:		type of user input which is enabled,
+		 * 					types are:
+		 * 						float		 : enter a numeric value containing , and . (positive or negative)
+		 * 						int			 : enter a numeric value (positive or negative)
+		 * 						textonly	 : only text can be entered (a-z, A-Z, spaces)
+		 * 						alphanumeric : only alphanumerical characters are allowed (a-z, A-Z, 0-9, spaces)
+		 * 						hex			 : to enable hexadecimal values only (0-9, a-f, spaces)
+		 * 						text		 : all characters are enabled, DEFAULT
+		 * 						largetext	 : large textinput is shown, no validation
+		 * 						textrequired : all characters are enabled, text must be entered
+		 * minimum, maximum:	when validate = 'float' or 'int', the entered value must be between these values
+		 * */
+		public function showInputDialog(title:String, message:String, inputHandler:Function, previousValue:String='', validate:String='text', minimum:Number=0, maximum:Number=0): void {
+			_inputHandlerFunction = inputHandler;
+			
+			if(_dlgInputNew == null){
+				_dlgInputNew = new InputDialog_new;
+			}
+			
+			PopUpManager.addPopUp(_dlgInputNew, DisplayObject(Application.application), true, null);
+			/*_dlgInputNew.open();
+			_dlgInputNew.reset();
+			
+			_dlgInputNew.centerWindow();*/
+			
+			_dlgInputNew.aTitle = title;
+			_dlgInputNew.aMessage = message;
+			_dlgInputNew.minimum = minimum;
+			_dlgInputNew.maximum = maximum;
+			_dlgInputNew.validate = validate;
+			_dlgInputNew.edt.text = previousValue;
+			_dlgInputNew.edt2.text = previousValue;
+			_dlgInputNew.aType = 'help';
+			PopUpManager.centerPopUp(_dlgInputNew);
+			_dlgInputNew.reset();
+			
+			_dlgInputNew.addEventListener('okEvent', inputHandlerInternal, false, 0.0, true);
+		}
+		private function inputHandlerInternal(event:Event):void {
+			_dlgInputNew.removeEventListener('okEvent', inputHandlerInternal);
+			_inputHandlerFunction( event.target.aText );
+		}
+		
+		
+		
+		private var progressDialog:ProgressDialog;
+		public var loaderIsShown:Boolean = false;
+		
+		/**
+		 * show a small dialog with 'loading...' and percentage
+		 * */
+		public function showLoader(title:String, text:String, value:Number, total:Number=100, disableApp:Boolean = true, indeterminate:Boolean=false):void {
+			if(progressDialog == null){
+				progressDialog = new ProgressDialog;
+			}
+			if(!loaderIsShown){
+				loaderIsShown = true;
+				progressDialog.open();
+			}
+			progressDialog.message = text;
+			progressDialog.title = title;
+			if(indeterminate){
+				progressDialog.pb.indeterminate = true;
+			}
+			else {
+				progressDialog.pb.indeterminate = false;
+				progressDialog.pb.setProgress(value, total);
+			}
+		}
+		
+		/**
+		 * hide the loader dialog
+		 * */
+		public function hideLoader():void {
+			progressDialog.close();
+			loaderIsShown = false;
+		}
+		
+
+		
+	}
+}

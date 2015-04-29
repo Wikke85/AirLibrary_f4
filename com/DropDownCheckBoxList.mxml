@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml">
+
+	<mx:Metadata>
+		[Event(name="change", type="flash.events.Event")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			[Bindable] public var dataProvider:Array = [];
+			[Bindable] public var labelField:String = 'label';
+			[Bindable] public var dataField:String = 'selected';
+			[Bindable] public var rowCount:int = 10;
+			
+			override public function setStyle(styleProp:String, newValue:*):void {
+				try{ grd.setStyle(styleProp, newValue);}
+				catch(e:Error){}
+			}
+			
+			override public function getStyle(styleProp:String):* {
+				try{ return grd.getStyle(styleProp);}
+				catch(e:Error){return null;}
+			}
+		]]>
+	</mx:Script>
+	<mx:DataGrid id="grd" width="100%" dataProvider="{dataProvider}" rowCount="{rowCount>dataProvider.length?dataProvider.length:rowCount}"
+		editable="true" showHeaders="false" sortableColumns="false"
+		dataChange="callLater(invalidateDisplayList);dispatchEvent(new Event('change'));" 
+		change="dispatchEvent(new Event('change'));"
+		valueCommit="callLater(invalidateDisplayList);">
+		<mx:columns>
+			<mx:DataGridColumn textAlign="left" 
+				editable="true"
+				rendererIsEditor="true" 
+				dataField="{dataField}"
+				editorDataField="{dataField}">
+				<mx:itemRenderer>
+					<mx:Component>
+						<mx:CheckBox width="100%" xmlns:mx="http://www.adobe.com/2006/mxml" selected="{data.selected}" textAlign="left"
+							implements="mx.controls.listClasses.IDropInListItemRenderer" click="doIt(event)" 
+							initialize="fillText()" creationComplete="fillText()">
+							<mx:Script>
+								<![CDATA[
+									//import mx.controls.DataGrid;
+									import mx.controls.listClasses.BaseListData;
+									private var _listData:BaseListData;
+									[Bindable("dataChange")]
+									override public function get listData():BaseListData { return _listData;}
+									override public function set listData(value:BaseListData):void {
+										_listData = value;
+										fillText();
+									}
+									private function fillText():void {
+										if(data == null) callLater(fillText);
+										else label = data[document.labelField];
+									}
+									private function doIt(event:Event):void {
+										data[document.dataField] = this[document.dataField];
+										dispatchEvent(new Event("dataChange"));
+									}
+								]]>
+							</mx:Script>
+						</mx:CheckBox>
+					</mx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<!--mx:DataGridColumn dataField="{dataField}" editable="false">
+				<mx:itemRenderer>
+					<mx:Component>
+						<mx:Label xmlns:mx="http://www.adobe.com/2006/mxml"
+							implements="mx.controls.listClasses.IDropInListItemRenderer" click="doIt(event)">
+							<mx:Script>
+								<![CDATA[
+									//import mx.controls.DataGrid;
+									import mx.controls.listClasses.BaseListData;
+									private var _listData:BaseListData;
+									[Bindable("dataChange")]
+									override public function get listData():BaseListData { return _listData;}
+									override public function set listData(value:BaseListData):void {
+										_listData = value;
+										fillText();
+									}
+									private function fillText():void {
+										if(data == null) callLater(fillText);
+										else text = data[document.labelField];
+									}
+									private function doIt(event:Event):void {data[document.dataField] = !data[document.dataField];}
+								]]>
+							</mx:Script>
+						</mx:Label>
+					</mx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn-->
+		</mx:columns>
+	</mx:DataGrid>
+</mx:VBox>

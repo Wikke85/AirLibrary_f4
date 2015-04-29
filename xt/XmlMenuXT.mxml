@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" width="150" height="100%" layout="vertical"
+	paddingBottom="0" paddingLeft="0" paddingRight="0" paddingTop="0"
+	title="Menu">
+	
+	<mx:Metadata>
+		[Event(name="menuItemClick", type="com.events.XmlMenuEvent")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.LinkButton;
+			import mx.controls.Text;
+			import com.events.XmlMenuEvent;
+			import mx.containers.VBox;
+			import mx.core.UIComponent;
+			
+			// when no image is given for menu item, or image failed to load,
+			// use this property as image source
+			[Bindable] public var defaultIcon:Object;
+			
+			private var refreshTimer:Timer;
+			
+			
+			public var labelFunction:Function;	// =>	function(data:Object):String 
+			
+			
+			public function set dataProvider(items:Object):void {
+				
+				accMenu.removeAllChildren();
+				accMenu.invalidateDisplayList();
+				
+				if(refreshTimer == null){
+					refreshTimer = new Timer(5000);
+					refreshTimer.addEventListener(TimerEvent.TIMER,timerTick, false, 0, true);
+					refreshTimer.start();
+				}
+				
+				var nodeChildren:XMLList = XML(items).children();
+				
+				
+				var box:VBox;
+				var menuItem:XmlMenuItemXT;
+				
+				var boxExtra:VBox;
+				var menuExtra:Text;
+				
+				var index1:int = -1;
+				var index2:int = -1;
+				var selectionIndex1:int = -1;
+				var selectionIndex2:int = -1;
+				
+				for each (var child:XML in nodeChildren){
+					
+					index1++;
+					
+					box = new VBox;
+					box.percentHeight = 100;
+					box.percentWidth = 100;
+					box.label = child.@label;
+					box.data = child;
+					
+					if(labelFunction == null){
+						box.label = child.@label;
+					}
+					else {
+						box.label = labelFunction( child );
+					}
+					
+					index2 = -1;
+					
+					for each (var subchild:XML in child.children()){
+						
+						index2++;
+						
+						if(firstSelectedView != '' && subchild.@view == firstSelectedView
+						&& selectionIndex1 == -1 && selectionIndex2 == -1){
+							selectionIndex1 = index1;
+							selectionIndex2 = index2;
+						}
+						
+						switch( String(subchild.@view) ){
+							case 'text':
+								menuExtra = new Text;
+								
+								if(labelFunction == null){
+									menuExtra.htmlText = subchild.@label;
+								}
+								else {
+									menuExtra.htmlText = labelFunction( subchild );
+								}
+								
+								menuExtra.selectable = false;
+								menuExtra.percentWidth = 100;
+								menuExtra.data = subchild;
+								menuExtra.setStyle('textAlign', 'center');
+								
+								box.addChild( menuExtra );
+								break;
+							
+							default:
+								menuItem = new XmlMenuItemXT;
+								
+								if(labelFunction == null){
+									menuItem.label = subchild.@label;
+								}
+								else {
+									menuItem.label = labelFunction( subchild );
+								}
+								
+								menuItem.view	= subchild.@view;
+								menuItem.state	= subchild.@state;
+								menuItem.data	= subchild;
+								
+								if(subchild.hasOwnProperty('@image') && subchild.@image != ''){
+									try {
+										menuItem.image	= subchild.@image;
+									}
+									catch(e:Error){
+										menuItem.image	= defaultIcon;
+									}
+								}
+								else {
+									menuItem.image	= defaultIcon;
+								}
+								
+								menuItem.defaultImage = defaultIcon;
+								
+								box.addChild( menuItem );
+								
+						}
+						
+					}
+					accMenu.addChild( box );
+				}
+				
+				if(selectionIndex1 > -1 && selectionIndex2 > -1){
+					
+					accMenu.selectedIndex = selectionIndex1;
+					accMenu.invalidateDisplayList();
+					
+					XmlMenuItemXT(UIComponent(accMenu.getChildAt(selectionIndex1)).getChildAt(selectionIndex2)).img.dispatchEvent(new MouseEvent('click',true));
+					
+				}
+				
+			}
+			
+			public function invalidateList():void {
+				for (var i:int=0; i<accMenu.numChildren; i++){
+					
+					if(labelFunction == null){
+						VBox(accMenu.getChildAt(i)).label = VBox(accMenu.getChildAt(i)).data.@label;
+					}
+					else {
+						VBox(accMenu.getChildAt(i)).label = labelFunction(VBox(accMenu.getChildAt(i)).data);
+					}
+					
+					
+					for (var j:int=0; j<VBox(accMenu.getChildAt(i)).numChildren; j++){
+						
+						var comp:Object = VBox(accMenu.getChildAt(i)).getChildAt(j);
+						
+						if(comp is Text){
+							comp.htmlText	= (labelFunction == null) ? String(comp.data.@label) : labelFunction(comp.data);
+						}
+						else {
+							comp.label		= (labelFunction == null) ? String(comp.data.@label) : labelFunction(comp.data);
+						}
+						
+					}
+				}
+			}
+			
+			private function timerTick(event:TimerEvent):void {
+				invalidateList();
+			}
+			
+			private function onClick(event:Event):void {
+				if(event.hasOwnProperty('target')
+				&& event.target != null 
+				&& event.target.hasOwnProperty('parent')
+				&& event.target.parent != null
+				&& 
+				(
+					event.target.parent is XmlMenuItemXT
+				)
+				){
+					dispatchEvent(
+						new XmlMenuEvent
+						(
+							XmlMenuEvent.MENU_ITEM_CLICK,
+							event.target.parent.view,
+							event.target.parent.state
+						)
+					);
+				}
+			}
+			
+			
+			[Bindable] public var firstSelectedView:String = '';
+			
+			
+		]]>
+	</mx:Script>
+	
+	
+	<mx:Accordion id="accMenu" width="100%" height="100%" click="onClick(event)" />
+	
+</mx:Panel>

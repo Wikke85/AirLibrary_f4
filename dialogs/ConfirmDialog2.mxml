@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<core:WindowXT xmlns:core="core.*" xmlns:mx="http://www.adobe.com/2006/mxml" layout="vertical" 
+	minWidth="400" minHeight="120" priority="1300"
+	paddingLeft="5" paddingRight="5" paddingBottom="5" paddingTop="5" 
+	xmlns:com="com.*"
+	
+	maximizable="false" minimizable="false" resizable="true" transparent="false"
+	systemChrome="{NativeWindowSystemChrome.STANDARD}" type="utility"
+	alwaysInFront="true" showStatusBar="false" 
+	
+	closing="event.preventDefault(); event.stopImmediatePropagation(); visible = false;"
+	>
+	
+	<mx:Metadata>
+		[Event("okEvent")]
+		[Event("cancelEvent")]
+	</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			import com.prosteps.Dialog;
+			
+			[Bindable] public var message:String = '';
+			
+			
+			public function set messageType(value:String):void {
+				if(beeld == null) callLater(function():void{ messageType = value; });
+				else {
+					switch (value.toLowerCase()) {
+						case Dialog.TYPE_WARNING:
+							beeld.source = Icons.warning_48;
+							break;
+						case Dialog.TYPE_ERROR:
+							beeld.source = Icons.error_48;
+							break;
+						case Dialog.TYPE_HELP:
+							beeld.source = Icons.help_48;
+							break;
+						case Dialog.TYPE_INFO:
+							beeld.source = Icons.information_48;
+							break;
+						case Dialog.TYPE_ABOUT:
+							beeld.source = Icons.about_48;
+							break;
+						case Dialog.TYPE_UNKNOWN:
+						default :
+							beeld.source = Icons.unknown_48;
+					}
+				}
+			}
+			
+			private function ok():void {
+				dispatchEvent(new Event("okEvent"));
+				close();
+			}
+			private function cancel():void {
+				dispatchEvent(new Event("cancelEvent"));
+				close();
+			}
+			
+			
+			public function reset():void {
+				/*visible = true;
+				stage.nativeWindow.orderToFront();
+				
+				callLater(regetFocus,[null]);*/
+				
+				
+				invalidateSize();
+				callLater(callLater,[callLater,[btnOK.setFocus]]);
+			}
+			
+			
+		]]>
+	</mx:Script>
+	
+	
+	<mx:HBox width="100%" verticalAlign="middle">
+		<mx:Image id="beeld" width="48" height="48" />
+		<mx:Text selectable="false" htmlText="{message}" width="100%" color="#000000" alpha="1"/>
+	</mx:HBox>
+	
+	
+	<mx:HBox width="100%">
+		<mx:Spacer width="100%" />
+		<mx:Button id="btnOK" label="OK" click="ok()" width="70" />
+		<mx:Button label="Cancel" click="cancel()" width="70" />
+	</mx:HBox>
+
+</core:WindowXT>

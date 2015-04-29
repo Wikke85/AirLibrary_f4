@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas
+  xmlns:mx="http://www.adobe.com/2006/mxml"
+  initialize="onInit(event)"
+  creationComplete="onCreation(event)"
+  width="640" height="480"
+  backgroundAlpha="0"
+  resize="resizeImages(event)"
+  >
+
+<mx:Script><![CDATA[
+  import mx.core.UIComponentCachePolicy;
+  import mx.collections.ArrayCollection;
+  import mx.logging.Log;
+  import mx.logging.ILogger;  
+  import mx.controls.Image;
+  
+  private static var log:ILogger = Log.getLogger("MJPG");
+
+  private var maxImages:uint = 2;
+  private var imgBuf:ArrayCollection = new ArrayCollection();
+  private var idleQue:ArrayCollection = new ArrayCollection();
+  private var _playing:Boolean = false;
+  private var _actualSize:Boolean = false;
+  private var imgWidth:uint = 0;
+  private var imgHeight:uint = 0;
+  
+  // Statistics Variables
+  private var sTime:Number = 0;
+  private var decTime:uint = 0;
+  private var _fRecCount:uint = 0;
+  private var _fDecCount:uint = 0;
+  private var _fps:Number = 0.0;
+
+  private function onInit(e:Event):void
+  {
+    for (var i:uint = 0; i < maxImages; i++)
+    {
+      var loader:Image = new Image();
+      loader.id = "loader" + i;
+      loader.name = "loader" + i;      
+      loader.setStyle("horizontalAlign", "center");
+      loader.setStyle("verticalAlign", "middle");      
+      loader.setStyle("horizontalCenter", 0);
+      loader.setStyle("verticalCenter", 0);
+      loader.width = width;
+      loader.height = height;
+      loader.cacheAsBitmap = false;
+      loader.autoLoad = false;
+      loader.cachePolicy = UIComponentCachePolicy.OFF;
+      loader.data = {loading:false, loadTime:0.0, inQue:false, frame:0}
+      loader.addEventListener(Event.INIT, onLoadComplete);
+      loader.addEventListener(IOErrorEvent.IO_ERROR, onImageError);
+      this.addChild(loader);
+    }
+  }
+  
+  private function onCreation(e:Event):void
+  {
+    log.info("Using {0} Loaders", maxImages);
+  }
+
+  private function resizeImages(e:Event):void
+  {
+    var arr:Array = getChildren();
+    for each(var loader:Image in arr)
+    {
+      loader.width = (actualSize && width > imgWidth) ? imgWidth : width;
+      loader.height = (actualSize && height > imgHeight) ? imgHeight : height;
+    }
+  }
+
+  [Bindable(event='framesDecChanged')]
+  public function get framesDecoded():uint { return _fDecCount; }  
+  private function updateDecFrames(v:uint):void
+  {
+    _fDecCount = v;
+    dispatchEvent(new Event("framesDecChanged"));    
+  }
+
+  [Bindable(event='playingChanged')]
+  public function get playing():Boolean { return _playing; }  
+  private function updatePlaying(v:Boolean):void
+  {
+    _playing = v;
+    dispatchEvent(new Event("playingChanged"));    
+  }
+
+  [Bindable(event='fpsChanged')]
+  public function get fps():Number { return _fps; }    
+  private function updateFps(v:Number):void
+  {
+    _fps = v;
+    dispatchEvent(new Event("fpsChanged"));    
+  }
+  
+  private function loadImage(loader:Image, obj:Object):void  
+  {
+    loader.data.loading = true;
+    loader.data.inQue = false;
+    loader.data.loadTime = new Date().getTime();
+    loader.data.frame = obj.frame;
+    loader.source = obj.data as ByteArray;
+    loader.load();
+    //log.debug("Frame: {0}, Loader: {1}, Size    : {2}, Time: {3}", obj.frame, 
+    //  loader.name, obj.data.length, loader.data.loadTime);
+    obj = null;
+  }
+  
+  public function load(image:ByteArray):void
+  {    
+    if(imgBuf.length >= maxImages+3)
+    {
+      var obj:Object = imgBuf.removeItemAt(0); 
+      log.warn("Frame: {0}, Dropped, TotalDropped: {1}", obj.frame, _fRecCount-framesDecoded);
+      obj = null;
+    }
+    _fRecCount++;
+    imgBuf.addItem({frame:_fRecCount, data:image});
+    //log.debug("Frame: {0}, Size: {1}", _fRecCount, image.length);
+
+    if(!playing)
+    {
+      log.info("Starting Stream");
+      sTime = new Date().getTime();
+      decTime = 0;
+      _fRecCount = 1;
+      updateDecFrames(0);      
+      updatePlaying(true);
+
+      var arr:Array = getChildren();
+      var loader:Image = null;
+      for each(loader in arr)
+      {
+        loader.data.inQue = true;
+        idleQue.addItem(loader);
+      }
+    }
+    
+    if(idleQue.length > 0)
+    {
+      loader = idleQue.removeItemAt(0) as Image; 
+      //log.debug("Using {0} From Idle Que, Length: {1}.", loader.name, idleQue.length);
+      loadImage(loader, imgBuf.removeItemAt(0));
+    }
+  }
+
+  private function onLoadComplete(event:Event):void
+  {
+    if(!playing) return;
+
+    var arr:Array = getChildren();
+    var loader:Image = event.currentTarget as Image;
+    var bitmap:Bitmap = loader.content as Bitmap;
+    if (bitmap != null) bitmap.smoothing = true;
+    loader.data.loading = false;    
+    
+    if(imgWidth == 0)
+    {
+      imgWidth = loader.contentWidth;
+      imgHeight = loader.contentHeight;
+      resizeImages(null);
+    }
+    
+    var curTime:Number = new Date().getTime();
+    decTime += curTime - loader.data.loadTime;
+    //var avgDecTime:Number = decTime / framesDecoded; 
+    //log.debug("Frame: {0}, Loader: {1}, DecTime : {2}, AvgDecTime: {3}", loader.data.frame, 
+    //  loader.name, curTime - loader.data.loadTime, avgDecTime.toFixed(2));
+    if(arr[arr.length-1].data.loadTime > loader.data.loadTime)
+    {
+      log.warn("Frame decoded out of sequence, {0}, {1}", 
+        arr[arr.length-1].data.frame, loader.data.frame);
+    }
+    else
+    { 
+      if(maxImages > 2)
+      {
+        removeChild(loader);
+        addChild(loader);
+      }
+      else if (maxImages == 2)
+      {
+        this.swapChildren(arr[0], arr[1]);
+      }
+      updateDecFrames(framesDecoded+1);
+      updateFps((framesDecoded * 1000) / (curTime - sTime));
+    }
+
+    arr = getChildren();
+    for (var i:uint = 0; i < arr.length-1; i++)
+    {
+      loader = arr[i] as Image;
+      //log.debug("{0}, Loading  : {1}, inQue : {2}", loader.name, obj.loading, obj.inQue);      
+      if(loader.data.inQue == true || loader.data.loading) continue;
+      
+      if(imgBuf.length == 0)
+      {
+        loader.data.inQue = true;
+        idleQue.addItem(loader);
+        //log.debug("Sending {0} to Idle Que, Length: {1}.", loader.name, idleQue.length);
+      }
+      else
+        loadImage(loader, imgBuf.removeItemAt(0));
+    }
+  }
+  
+  private function onImageError(e:IOErrorEvent):void
+  {
+    var loader:Image = e.currentTarget as Image;
+    loader.data.loading = false;  
+    log.error("Error in loading Frame, {0}", loader.data.frame);    
+    if(imgBuf.length == 0)
+    {
+      loader.data.inQue = true;
+      idleQue.addItem(loader);
+      //log.debug("Sending {0} to Idle Que, Length: {1}.", loader.name, idleQue.length);
+    }
+    else
+      loadImage(loader, imgBuf.removeItemAt(0)); 
+  }
+  
+  public function reset():void
+  {
+    updatePlaying(false);
+    idleQue.removeAll();
+    imgWidth = 0;
+    imgHeight = 0;  
+    var arr:Array = getChildren();
+    for each(var loader:Image in arr)
+    {
+      loader.source = null;
+      if(loader.data.loading)
+        updateDecFrames(framesDecoded+1);
+      loader.data.loading = false;
+      loader.data.inQue = false;
+      loader.data.loadTime = 0.0;
+    }
+    while(imgBuf.length != 0)
+    {
+      _fRecCount--;
+      var obj:Object = imgBuf.removeItemAt(0);
+      log.info("Frame: {0} removed frome the image buffer.", obj.frame);
+      obj = null;
+    }  
+
+    updateFps((framesDecoded * 1000) / (new Date().getTime() - sTime));
+
+    var recvFps:Number = (_fRecCount * 1000) / (new Date().getTime() - sTime); 
+    log.info("Resetting, AvgRendered : {0}fps, AvgReceived: {1}fps, FramesDropped: {2}", 
+      fps.toFixed(2), recvFps.toFixed(2), _fRecCount - framesDecoded);
+  }
+  
+  public function getCurrImage():ByteArray
+  {
+    var arr:Array = getChildren();
+    var loader:Image = arr[arr.length-1] as Image;
+    if(loader.source is ByteArray)
+      return loader.source as ByteArray;
+    return new ByteArray();  
+  }     
+
+  [Bindable]  
+  public function get actualSize():Boolean { return _actualSize; } 
+  public function set actualSize(v:Boolean):void
+  {
+    _actualSize = v;
+    resizeImages(null);
+  } 
+         
+]]></mx:Script>
+
+</mx:Canvas>
+

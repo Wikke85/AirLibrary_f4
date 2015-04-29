@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<core:WindowXT xmlns:core="core.*" xmlns:mx="http://www.adobe.com/2006/mxml" layout="vertical" 
+	minWidth="300" minHeight="100" priority="5000"
+	paddingLeft="5" paddingRight="5" paddingBottom="5" paddingTop="5" 
+	xmlns:com="com.*"
+	
+	maximizable="false" minimizable="false" resizable="true" transparent="false"
+	systemChrome="{NativeWindowSystemChrome.STANDARD}" type="utility"
+	alwaysInFront="true" showStatusBar="false" 
+	
+	closing="event.preventDefault(); event.stopImmediatePropagation(); visible = false;" defaultButton="{btnOK}"
+	>
+	
+	<mx:Metadata>
+		[Event("confirmation")]
+	</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			
+			[Bindable] public var info:String = '';
+			
+			public function set messageType(value:String):void {
+				/*switch (value.toLowerCase()) {
+					case Dialogs2.TYPE_WARNING:
+						beeld.source = Icons.warning_48;
+						break;
+					case Dialogs2.TYPE_ERROR:
+						beeld.source = Icons.error_48;
+						break;
+					case Dialogs2.TYPE_HELP:
+						beeld.source = Icons.help_48;
+						break;
+					case Dialogs2.TYPE_INFO:
+						beeld.source = Icons.information_48;
+						break;
+					case Dialogs2.TYPE_ABOUT:
+						beeld.source = Icons.about_48;
+						break;
+					case Dialogs2.TYPE_UNKNOWN:
+					default :
+						beeld.source = Icons.unknown_48;
+				}*/
+			}
+			
+			private function ok():void {
+				if(lst.selectedItem != null){
+					dispatchEvent(new Event('confirmation'));
+					close();
+				}
+			}
+			
+			private function cancel():void {
+				dispatchEvent(new Event('cancel'));
+				close();
+			}
+			
+			public function get selectedItem():Object {
+				return lst.selectedItem;
+				
+			}
+			
+			
+			
+			public function reset():void {
+				
+				lst.dataProvider = [];
+				lst.selectedIndex = -1;
+				lst.invalidateDisplayList();
+				
+				callLater(callLater,[callLater,[btnOK.setFocus]]);
+			}
+			
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Text id="txtInfo" text="{info}" width="100%"/>
+	
+	<mx:List id="lst" width="100%" height="100%" 
+		doubleClickEnabled="true" doubleClick="ok()"/>
+	
+	
+	<mx:HBox width="100%">
+		<mx:Spacer width="100%" />
+		<mx:Button id="btnOK" label="OK" click="ok()" width="60" enabled="{lst.selectedItem != null}"/>
+		<mx:Button label="Cancel" click="cancel()" width="60"/>
+	</mx:HBox>
+
+</core:WindowXT>

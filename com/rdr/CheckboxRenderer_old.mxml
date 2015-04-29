@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:CheckBox xmlns:mx="http://www.adobe.com/2006/mxml" implements="mx.controls.listClasses.IDropInListItemRenderer" 
+	click="doIt(event)" >
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.listClasses.BaseListData;
+
+		   // Internal variable for the property value.
+		    private var _listData:BaseListData;
+		    
+		    // Make the listData property bindable.
+		    [Bindable("dataChange")]
+		    
+		    // Define the getter method.
+		    override public function get listData():BaseListData
+		    {
+		      return _listData;
+		    }
+		    
+		    // Define the setter method,
+		    override public function set listData(value:BaseListData):void
+		    {
+		      _listData = value;
+				setCheckvalue();
+		    }
+		    
+		    [Bindable("dataChange")]
+			[Bindable("change")]
+			[Bindable("render")]
+			private function setCheckvalue():void {
+				if(data == null){
+					//callLater(setCheckvalue);
+				}
+				else {
+					/*if(!isNaN(data[listData['dataField']])){
+						selected = data[listData['dataField']] == 1;
+					}
+					else {
+						selected = data[listData['dataField']].toString().toLowerCase() == 'true';
+					}*/
+					
+					var field:Object = null;
+					
+					if( listData.hasOwnProperty('dataField') && data.hasOwnProperty(listData['dataField']) )
+					{
+						field = data[listData['dataField']];
+					}
+					if( field == null )
+					{
+						field = 'null';
+					}
+					
+					switch( field.toString().toLowerCase() )
+					{
+						case 'true':
+						case '1':
+							selected = true;
+							break;
+						
+						default:
+							selected = false;
+					}
+					
+				}
+			}
+		    
+		    private function doIt(event:Event):void {
+		    	data[listData['dataField']] = this.selected;
+		    }
+		    
+		]]>
+	</mx:Script>
+	
+</mx:CheckBox>

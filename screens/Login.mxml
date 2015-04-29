@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="vertical"
+	creationComplete="onComplete()">
+	
+	<mx:Metadata>
+		[Event(name="login", type="flash.events.Event")]
+		[Event(name="error", type="flash.events.Event")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			
+			[Bindable] public var labelUsername:String = '';
+			[Bindable] public var labelPassword:String = '';
+			[Bindable] public var labelRemember:String = '';
+			[Bindable] public var labelButton:String = '';
+			
+			[Bindable] public var passwordRequired:Boolean = false;
+			
+			[Bindable] public var rememberUsername:Boolean = false;
+			[Bindable] public var rememberPassword:Boolean = false;
+			
+			[Bindable] public var errorStringUsername:String = '';
+			[Bindable] public var errorStringPassword:String = '';
+			
+			private function onComplete():void {
+				var myLSO:SharedObject = SharedObject.getLocal("user_login_values");
+				
+				if (myLSO.data.username != null) {
+					edtUsername.text = myLSO.data.username;
+					edtPassword.text = myLSO.data.password;
+					
+					edtRemember.selected = true;
+					
+					callLater(callLater,[doLogin]);
+					
+				}
+				else {
+					edtRemember.selected = false;
+					frm.enabled = true;
+				}
+				
+				
+				callLater(callLater,[setFocusCorrect]);
+				
+			}
+			
+			private function setFocusCorrect():void {
+				edtUsername.setFocus();
+				edtUsername.setSelection(0, edtUsername.text.length);
+			}
+			
+			private function doLogin():void {
+				edtUsername.errorString = '';
+				edtPassword.errorString = '';
+				
+				
+				if(edtUsername.text.split(' ').join('') == ''){
+					edtUsername.errorString = errorStringUsername;
+				}
+				
+				if(passwordRequired && edtPassword.text.split(' ').join('') == ''){
+					edtPassword.errorString = errorStringPassword;
+				}
+				
+				if(edtUsername.errorString == '' && edtPassword.errorString == ''){
+					
+					if(edtRemember.selected){
+						var so:SharedObject = SharedObject.getLocal("user_login_values");
+						so.data.username = edtUsername.text;
+						so.data.password = edtPassword.text;
+						so.flush();
+					}
+					
+					dispatchEvent(new Event('login'));
+				}
+				else {
+					edtRemember.selected = false;
+					frm.enabled = true;
+					dispatchEvent(new Event('error'));
+				}
+				
+				
+			}
+			
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Form id="frm" width="100%" height="100%" enabled="false">
+		
+		<mx:FormItem label="{labelUsername}" width="100%" required="true">
+			<mx:TextInput id="edtUsername" width="100%"/>
+		</mx:FormItem>
+		
+		<mx:FormItem label="{labelPassword}" width="100%" required="{passwordRequired}">
+			<mx:TextInput id="edtPassword" width="100%"/>
+		</mx:FormItem>
+		
+		<mx:FormItem label=" " width="100%" visible="{rememberUsername}" includeInLayout="{rememberUsername}">
+			<mx:CheckBox id="edtRemember" label="{labelRemember}" width="100%"/>
+		</mx:FormItem>
+		
+		<mx:Spacer/>
+		
+		<mx:FormItem label=" " width="100%">
+			<mx:Button label="{labelButton}" click="doLogin()"/>
+		</mx:FormItem>
+		
+	</mx:Form>
+	
+</mx:Panel>

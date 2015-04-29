@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<core:WindowXT xmlns:core="core.*" xmlns:mx="http://www.adobe.com/2006/mxml" layout="vertical" 
+	minWidth="400" minHeight="150" priority="1100"
+	paddingLeft="5" paddingRight="5" paddingBottom="5" paddingTop="5" 
+	xmlns:com="com.*"
+	
+	maximizable="false" minimizable="false" resizable="true" transparent="false"
+	systemChrome="{NativeWindowSystemChrome.STANDARD}" type="utility"
+	alwaysInFront="true" showStatusBar="false" 
+	
+	closing="event.preventDefault(); event.stopImmediatePropagation(); visible = false;" 
+	>
+	
+	<mx:Metadata>
+		[Event("okEvent")]
+		[Event("cancelEvent")]
+	</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			import com.prosteps.Dialog;
+			
+			[Bindable] public var message:String = '';
+			
+			public var aText:String = '';
+			
+			public function set messageType(value:String):void {
+				switch (value.toLowerCase()) {
+					case Dialog.TYPE_WARNING:
+						beeld.source = Icons.warning_48;
+						break;
+					case Dialog.TYPE_ERROR:
+						beeld.source = Icons.error_48;
+						break;
+					case Dialog.TYPE_HELP:
+						beeld.source = Icons.help_48;
+						break;
+					case Dialog.TYPE_INFO:
+						beeld.source = Icons.information_48;
+						break;
+					case Dialog.TYPE_ABOUT:
+						beeld.source = Icons.about_48;
+						break;
+					case Dialog.TYPE_UNKNOWN:
+					default :
+						beeld.source = Icons.unknown_48;
+				}
+			}
+			
+			/* minimum/maximum values possible for when validate = float or int */
+			public var minimum:Number = 0;
+			public var maximum:Number = 100;
+			
+			private var _validate:String = 'text';
+			
+			//[Bindable]
+			[Inspectable(category="General", enumeration="text,largetext,textonly,textrequired,alphanumeric,hex,float,int", defaultValue="text")]
+			public function set validate(value:String):void {
+				_validate = value;
+				btnOK.enabled = true;
+				
+				edt.visible		= _validate != 'largetext';
+				edt2.visible	= _validate == 'largetext';
+				edt.includeInLayout		= _validate != 'largetext';
+				edt2.includeInLayout	= _validate == 'largetext';
+				
+				sp1.visible			= _validate != 'largetext';
+				sp1.includeInLayout	= _validate != 'largetext';
+				sp2.visible			= _validate != 'largetext';
+				sp2.includeInLayout	= _validate != 'largetext';
+				sp3.visible			= _validate != 'largetext';
+				sp3.includeInLayout	= _validate != 'largetext';
+				
+				minWidth	= _validate == 'largetext' ? 500 : 400;
+				minHeight	= _validate == 'largetext' ? 300 : 150;
+				
+				switch(_validate){
+					case 'largetext':
+						
+						break;
+						
+					case 'float':
+						edt.restrict = '\-0-9\.,';
+						break;
+					
+					case 'int':
+						edt.restrict = '\-0-9';
+						break;
+					
+					case 'textonly':
+						edt.restrict = 'a-zA-Z ';
+						break;
+					
+					case 'alphanumeric':
+						edt.restrict = 'a-zA-Z0-9 ';
+						break;
+					
+					case 'hex':
+						edt.restrict = 'a-fA-F0-9 ';
+						break;
+					
+					case 'textrequired':
+						btnOK.enabled = false;
+						break;
+					
+					case 'text':
+					default:
+						edt.restrict = null;
+				}
+			}
+			
+			private function ok():void {
+				if(_validate == 'largetext'){
+					aText = edt2.text;
+				}
+				else {
+					aText = edt.text;
+				}
+				
+				dispatchEvent(new Event("okEvent"));
+				close();
+			}
+			private function cancel():void {
+				dispatchEvent(new Event("cancelEvent"));
+				close();
+			}
+			
+			
+			public function reset():void {
+				//edt.text = '';
+				if(_validate == 'textrequired' && edt.text.replace(/ /g, '') != ''){
+					btnOK.enabled = true;
+				}
+				
+				invalidateSize();
+				
+				if(_validate == 'largetext'){
+					callLater(callLater,[callLater,[edt2.setFocus]]);
+				}
+				else {
+					callLater(callLater,[callLater,[edt.setFocus]]);
+				}
+			}
+			
+			private function onKeyUp(event:KeyboardEvent) :void {
+				if(event.keyCode == 13)			ok();		//ENTER
+				else if(event.keyCode == 27)	cancel();	//ESC
+				else {
+					switch(_validate){
+						case 'float':
+							var t:String = edt.text.split(',').join('.');
+							
+							if(t.indexOf('-') != -1){
+								t = '-' + t.split('-').join('');
+							}
+							
+							var firstDotIndex:int = t.indexOf('.');
+							var lastDotIndex:int = t.lastIndexOf('.');
+							
+							if(firstDotIndex < lastDotIndex){
+								var t1:String = t.substring(0,lastDotIndex-1);
+								var t2:String = t.substring(lastDotIndex+1);
+								
+								edt.text = t1.split('.').join('') + '.' + t2;
+							}
+							else {
+								edt.text = t;
+							}
+							
+							if(minimum < maximum){
+								if(Number(edt.text) > maximum) edt.text = maximum.toString();
+								if(Number(edt.text) < minimum) edt.text = minimum.toString();
+							}
+							break;
+						
+						case 'int':
+							if(edt.text.indexOf('-') != -1){
+								edt.text = '-' + edt.text.split('-').join('');
+							}
+							if(minimum < maximum){
+								if(Number(edt.text) > maximum) edt.text = maximum.toString();
+								if(Number(edt.text) < minimum) edt.text = minimum.toString();
+							}
+							break;
+						
+						case 'textrequired':
+							btnOK.enabled = edt.text.replace(/ /g, '') != '';
+							break;
+						
+						default:
+					}
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	
+	
+	<mx:HBox width="100%" height="100%">
+		<mx:Image id="beeld" width="48" height="48" />
+		
+		<mx:VBox width="100%" height="100%">
+			<mx:Spacer id="sp1" height="100%" />
+			
+			<mx:Text selectable="false" htmlText="{message}" width="100%" color="#000000" />
+			
+			<mx:Spacer id="sp2" height="100%" />
+			
+			<mx:TextInput id="edt" width="100%" keyUp="onKeyUp(event)" />
+			<mx:TextArea id="edt2" width="100%" height="100%" visible="false" includeInLayout="false"/>
+			
+			<mx:Spacer id="sp3" height="100%" />
+		</mx:VBox>
+		
+	</mx:HBox>
+	
+	
+	<mx:HBox width="100%">
+		<mx:Spacer width="100%" />
+		<mx:Button id="btnOK" label="OK" click="ok()" width="60" />
+		<mx:Button label="Cancel" click="cancel()" width="60" />
+	</mx:HBox>
+
+</core:WindowXT>

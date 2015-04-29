@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<core:WindowXT xmlns:core="core.*" xmlns:mx="http://www.adobe.com/2006/mxml" layout="vertical" 
+	minWidth="300" minHeight="100" priority="10000"
+	paddingLeft="5" paddingRight="5" paddingBottom="5" paddingTop="5" 
+	xmlns:com="com.*"
+	
+	maximizable="false" minimizable="false" resizable="true" transparent="false"
+	systemChrome="{NativeWindowSystemChrome.STANDARD}" type="utility"
+	alwaysInFront="true" showStatusBar="false" 
+	
+	closing="event.preventDefault(); event.stopImmediatePropagation(); visible = false;" defaultButton="{btnOK}"
+	>
+	
+	<mx:Metadata>
+		[Event("confirmation")]
+	</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			import com.prosteps.Dialog;
+			
+			[Bindable] public var message:String = '';
+			
+			public function set messageType(value:String):void {
+				switch (value.toLowerCase()) {
+					case Dialog.TYPE_WARNING:
+						beeld.source = Icons.warning_48;
+						break;
+					case Dialog.TYPE_ERROR:
+						beeld.source = Icons.error_48;
+						break;
+					case Dialog.TYPE_HELP:
+						beeld.source = Icons.help_48;
+						break;
+					case Dialog.TYPE_INFO:
+						beeld.source = Icons.information_48;
+						break;
+					case Dialog.TYPE_ABOUT:
+						beeld.source = Icons.about_48;
+						break;
+					case Dialog.TYPE_UNKNOWN:
+					default :
+						beeld.source = Icons.unknown_48;
+				}
+			}
+			
+			private function confirm():void {
+				
+				callLater(callLater,[ dispatchEvent,[new Event("confirmation")] ]);
+				
+				close();
+			}
+			
+			
+			
+			public function reset():void {
+				/*visible = true;
+				stage.nativeWindow.orderToFront();
+				
+				callLater(regetFocus,[null]);*/
+				
+				//invalidateSize();
+				
+				txt.htmlText = message;
+				
+				callLater(callLater,[callLater,[btnOK.setFocus]]);
+			}
+			
+			
+		]]>
+	</mx:Script>
+	
+	
+	<mx:HBox width="100%" height="100%" verticalAlign="bottom">
+		<mx:Image id="beeld" width="48" height="48" />
+		<mx:Text id="txt" width="100%" height="60" color="#000000" />
+	</mx:HBox>
+	
+	<mx:HBox width="100%">
+		<mx:Spacer width="100%" />
+		<mx:Button id="btnOK" label="OK" click="confirm()"  width="60"/>
+	</mx:HBox>
+
+</core:WindowXT>

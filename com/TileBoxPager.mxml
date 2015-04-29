@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:HBox xmlns:mx="http://www.adobe.com/2006/mxml" horizontalGap="0" verticalAlign="middle"
+	creationComplete="onCreationComplete(event)">
+
+	<mx:Script>
+		<![CDATA[
+			/*[Bindable][Embed("../images/skins/pager_first_over.png")]	 private var imgFirstUp:Class;
+			[Bindable][Embed("../images/skins/pager_previous_over.png")] private var imgPrevUp:Class;
+			[Bindable][Embed("../images/skins/pager_next_over.png")]	 private var imgNextUp:Class;
+			[Bindable][Embed("../images/skins/pager_last_over.png")]	 private var imgLastUp:Class;
+
+			[Bindable][Embed("../images/skins/pager_first_over.png")]	 private var imgFirstOver:Class;
+			[Bindable][Embed("../images/skins/pager_previous_over.png")] private var imgPrevOver:Class;
+			[Bindable][Embed("../images/skins/pager_next_over.png")]	 private var imgNextOver:Class;
+			[Bindable][Embed("../images/skins/pager_last_over.png")]	 private var imgLastOver:Class;*/
+			
+			[Bindable] private var imgFirstUp:String	= "images/skins/pager_first_over.png";
+			[Bindable] private var imgPrevUp:String		= "images/skins/pager_previous_over.png";
+			[Bindable] private var imgNextUp:String		= "images/skins/pager_next_over.png";
+			[Bindable] private var imgLastUp:String		= "images/skins/pager_last_over.png";
+
+			[Bindable] private var imgFirstOver:String	= "images/skins/pager_first_over.png";
+			[Bindable] private var imgPrevOver:String	= "images/skins/pager_previous_over.png";
+			[Bindable] private var imgNextOver:String	= "images/skins/pager_next_over.png";
+			[Bindable] private var imgLastOver:String	= "images/skins/pager_last_over.png";
+			
+			[Bindable] private var seperatorText:String = ":";
+			[Bindable] private var seperatorWidth:Number = 7;
+			private var _created:Boolean;
+			private var lnkSelected:Label;
+
+			// Properties:
+			// ===========
+			private var _tileBox:TileBox;
+			public function get tileBox(): TileBox { return _tileBox; }
+			public function set tileBox(value:TileBox): void {
+				_tileBox = value;
+				initPager();
+			}
+
+			// Private Methods:
+			// ================
+			private function initPager(): void {
+				if(_created && tileBox) {
+					tileBox.addEventListener(TileBox.PAGE_CHANGE,onPageChange);
+					tileBox.addEventListener("pageCountChange",onPageCountChange);
+					updatePager();
+				}
+			}
+			private function updatePager(): void {
+				var _pageCount:int = tileBox.pageCount;
+				var _currentPage:int = tileBox.currentPage;
+				//if(_currentPage > _pageCount - 1) return;
+				visible = (_pageCount >= 2);
+				lnk3.visible = lnk3.includeInLayout = (_pageCount >= 3);
+				lnk4.visible = lnk4.includeInLayout = (_pageCount >= 4);
+				lnk5.visible = lnk5.includeInLayout = (_pageCount >= 5);
+				imgFirst.visible = imgPrev.visible = lnkPrev.visible = (_currentPage > 0);
+				imgLast.visible = imgNext.visible = lnkNext.visible = (_currentPage < _pageCount - 1);
+				imgFirst.includeInLayout = imgPrev.includeInLayout = lnkPrev.includeInLayout = imgFirst.visible;
+				imgLast.includeInLayout = imgNext.includeInLayout = lnkNext.includeInLayout = imgLast.visible;
+				var startPage:int = 1;
+				if((_pageCount > 5) && (_currentPage + 1 >= 3) && (_currentPage + 1 <= _pageCount)) {
+					if(_currentPage + 1 >= (_pageCount - 2)) {
+						startPage = _pageCount - 4;
+					} else {
+						startPage = (_currentPage + 1) - 2;
+					}
+				}
+				lnk1.text = String(startPage);
+				lnk2.text = String(startPage + 1);
+				lnk3.text = String(startPage + 2);
+				lnk4.text = String(startPage + 3);
+				lnk5.text = String(startPage + 4);
+				lnk1.setStyle("color",0x000000);
+				lnk2.setStyle("color",0x000000);
+				lnk3.setStyle("color",0x000000);
+				lnk4.setStyle("color",0x000000);
+				lnk5.setStyle("color",0x000000);
+				lnkSelected = this["lnk" + String(_currentPage + 1 - (startPage - 1))];
+				lnkSelected.setStyle("color",0xD7181F);
+			}
+			private function dispose(): void {
+				if(tileBox) {
+					tileBox.removeEventListener(TileBox.PAGE_CHANGE,onPageChange);
+					tileBox.removeEventListener("pageCountChange",onPageCountChange);
+					tileBox = null;
+					
+				}
+			}
+
+			// Event Handler Methods:
+			// ======================
+			private function onCreationComplete(event:Event): void {
+				_created = true;
+				initPager();
+			}
+			private function onPageChange(event:Event): void {
+				updatePager();
+			}
+			private function onPageCountChange(event:Event): void {
+				updatePager();
+			}
+			private function onLnkRollOver(event:MouseEvent): void {
+				var lbl:Label = Label(event.currentTarget)
+				if(lbl != lnkSelected) lbl.setStyle("color",0xD7181F);
+				if(lbl == lnkPrev) imgPrev.source = imgPrevOver;
+				if(lbl == lnkNext) imgNext.source = imgNextOver;
+				//Utils.showHandCursor();
+			}
+			private function onLnkRollOut(event:MouseEvent): void {
+				var lbl:Label = Label(event.currentTarget)
+				if(lbl != lnkSelected) lbl.setStyle("color",0x000000);
+				if(lbl == lnkPrev) imgPrev.source = imgPrevUp;
+				if(lbl == lnkNext) imgNext.source = imgNextUp;
+				//Utils.restorePreviousCursor();
+			}
+			private function onImgRollOver(event:MouseEvent): void {
+				var img:Image = Image(event.currentTarget);
+				switch(img.id) {
+					case "imgFirst": img.source = imgFirstOver; break;
+					case "imgPrev":  img.source = imgPrevOver;
+									 lnkPrev.setStyle("color",0xD7181F); break;
+					case "imgNext":  img.source = imgNextOver;
+									 lnkNext.setStyle("color",0xD7181F); break;
+					case "imgLast":  img.source = imgLastOver; break;
+				}
+			}
+			private function onImgRollOut(event:MouseEvent): void {
+				var img:Image = Image(event.currentTarget);
+				switch(img.id) {
+					case "imgFirst": img.source = imgFirstUp; break;
+					case "imgPrev":  img.source = imgPrevUp;
+									 lnkPrev.setStyle("color",0x000000); break;
+					case "imgNext":  img.source = imgNextUp;
+									 lnkNext.setStyle("color",0x000000); break;
+					case "imgLast":  img.source = imgLastUp; break;
+				}
+			}
+			private function onLnkClick(event:MouseEvent): void {
+				var lbl:Label = Label(event.currentTarget)
+				if(lbl == lnkSelected) return;
+				else if(lbl == lnkPrev) tileBox.currentPage--;
+				else if(lbl == lnkNext) tileBox.currentPage++;
+				else {
+					tileBox.currentPage = int(lbl.text) - 1;
+				}
+			}
+			private function onImgClick(event:MouseEvent): void {
+				var img:Image = Image(event.currentTarget);
+				switch(img.id) {
+					case "imgFirst": tileBox.currentPage = 0; break;
+					case "imgPrev":  tileBox.currentPage--; break;
+					case "imgNext":  tileBox.currentPage++; break;
+					case "imgLast":  tileBox.currentPage = 999; break;
+				}
+			}
+		]]>
+	</mx:Script>
+
+
+	<mx:Label text="Page: " height="100%" fontWeight="bold" />
+	<mx:Spacer width="4" height="100%" />
+
+	<mx:Image id="imgFirst" source="{imgFirstUp}" buttonMode="true"
+			rollOver="onImgRollOver(event)" rollOut="onImgRollOut(event)" click="onImgClick(event)" />
+
+	<mx:Label text="{seperatorText}" width="{seperatorWidth + 4}" height="100%" textAlign="center"
+		visible="{imgFirst.visible}" includeInLayout="{imgFirst.includeInLayout}" />
+
+	<mx:HBox horizontalGap="1" height="100%" verticalAlign="middle">
+		<mx:Image id="imgPrev" source="{imgPrevUp}" buttonMode="true"
+			rollOver="onImgRollOver(event)" rollOut="onImgRollOut(event)" click="onImgClick(event)" />
+		<mx:Label id="lnkPrev" height="100%" text="Previous" buttonMode="true"
+			rollOver="onLnkRollOver(event)" rollOut="onLnkRollOut(event)" click="onLnkClick(event)" />
+	</mx:HBox>
+
+	<mx:Label text="{seperatorText}" width="{seperatorWidth}" height="100%" textAlign="center"
+		visible="{imgPrev.visible}" includeInLayout="{imgPrev.includeInLayout}" />
+
+	<mx:Label id="lnk1" text="1" buttonMode="true" height="100%" textAlign="center" paddingRight="-5"
+		rollOver="onLnkRollOver(event)" rollOut="onLnkRollOut(event)" click="onLnkClick(event)" />
+	<mx:Label text="{seperatorText}" width="{seperatorWidth}" height="100%" textAlign="center" />
+	<mx:Label id="lnk2" text="2" buttonMode="true" height="100%" textAlign="center" paddingRight="-5"
+		rollOver="onLnkRollOver(event)" rollOut="onLnkRollOut(event)" click="onLnkClick(event)" />
+
+	<mx:Label text="{seperatorText}" width="{seperatorWidth}" height="100%" textAlign="center"
+		visible="{lnk3.visible}" includeInLayout="{lnk3.includeInLayout}" />
+	<mx:Label id="lnk3" text="3" buttonMode="true" height="100%" textAlign="center" paddingRight="-5"
+		rollOver="onLnkRollOver(event)" rollOut="onLnkRollOut(event)" click="onLnkClick(event)"
+		visible="false" includeInLayout="false" />
+
+	<mx:Label text="{seperatorText}" width="{seperatorWidth}" height="100%" textAlign="center"
+		visible="{lnk4.visible}" includeInLayout="{lnk4.includeInLayout}" />
+	<mx:Label id="lnk4" text="4" buttonMode="true" height="100%" textAlign="center" paddingRight="-5"
+		rollOver="onLnkRollOver(event)" rollOut="onLnkRollOut(event)" click="onLnkClick(event)"
+		visible="false" includeInLayout="false" />
+
+	<mx:Label text="{seperatorText}" width="{seperatorWidth}" height="100%" textAlign="center"
+		visible="{lnk5.visible}" includeInLayout="{lnk5.includeInLayout}" />
+	<mx:Label id="lnk5" text="5" buttonMode="true" height="100%" textAlign="center" paddingRight="-5"
+		rollOver="onLnkRollOver(event)" rollOut="onLnkRollOut(event)" click="onLnkClick(event)"
+		visible="false" includeInLayout="false" />
+
+	<mx:Label text="{seperatorText}" width="{seperatorWidth}" height="100%" textAlign="center"
+		visible="{imgNext.visible}" includeInLayout="{imgNext.includeInLayout}" />
+
+	<mx:HBox horizontalGap="1" height="100%" verticalAlign="middle">
+		<mx:Label id="lnkNext" height="100%" text="Next" buttonMode="true"
+			rollOver="onLnkRollOver(event)" rollOut="onLnkRollOut(event)" click="onLnkClick(event)" />
+		<mx:Image id="imgNext" source="{imgNextUp}" buttonMode="true"
+			rollOver="onImgRollOver(event)" rollOut="onImgRollOut(event)" click="onImgClick(event)" />
+	</mx:HBox>
+
+	<mx:Label text="{seperatorText}" width="{seperatorWidth + 4}" height="100%" textAlign="center"
+		visible="{imgLast.visible}" includeInLayout="{imgLast.includeInLayout}" />
+
+	<mx:Image id="imgLast" source="{imgLastUp}" buttonMode="true"
+			rollOver="onImgRollOver(event)" rollOut="onImgRollOut(event)" click="onImgClick(event)" />
+
+	<mx:Spacer width="2" height="100%" />
+
+</mx:HBox>

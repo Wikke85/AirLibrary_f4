@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" title="{aTitle}" minWidth="400" minHeight="120" 
+	alpha="1" borderAlpha="1" paddingLeft="5" paddingRight="5" paddingTop="5">
+	<mx:Metadata>
+		[Event("yesEvent")]
+		[Event("noEvent")]
+		[Event("cancelEvent")]
+	</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			import com.prosteps.Dialogs;
+			import com.prosteps.Factory;
+			import mx.managers.PopUpManager;
+			
+			[Bindable] public var aTitle:String = '';
+			[Bindable] public var aMessage:String = '';
+			[Bindable] public var aInternalMessage:String = '';
+			[Bindable] public var factory:Factory = Factory.instance;
+			
+			public function set type(value:String):void {
+				if(beeld == null) callLater(function():void{ type = value; });
+				else {
+					switch (value.toLowerCase()) {
+						case Dialogs.TYPE_WARNING:
+							beeld.source = Icons.warning_48;
+							break;
+						case Dialogs.TYPE_ERROR:
+							beeld.source = Icons.stop_48;
+							break;
+						case Dialogs.TYPE_HELP:
+							beeld.source = Icons.help_48;
+							break;
+						case Dialogs.TYPE_ABOUT:
+							beeld.source = Icons.about_48;
+							break;
+						case Dialogs.TYPE_UNKNOWN:
+						default :
+							beeld.source = Icons.unknown_48;
+					}
+				}
+			}
+			
+			private function yes():void {
+				dispatchEvent(new Event("yesEvent"));
+				callLater(close);
+			}
+			private function no():void {
+				dispatchEvent(new Event("noEvent"));
+				callLater(close);
+			}
+			private function cancel():void {
+				dispatchEvent(new Event("cancelEvent"));
+				callLater(close);
+			}
+			
+			
+			public function reset():void {
+				invalidateSize();
+				//callLater(callLater,[callLater,[btnOK.setFocus]]);
+			}
+			
+			private function close():void {
+				PopUpManager.removePopUp(this);
+			}
+			
+		]]>
+	</mx:Script>
+	
+	
+	<mx:HBox width="100%" verticalAlign="middle">
+		<mx:Image id="beeld" width="48" height="48" />
+		<mx:Text selectable="false" htmlText="{aMessage}" width="100%" color="#000000" />
+	</mx:HBox>
+	
+	
+	<mx:HBox width="100%">
+		<mx:Button id="btnYes" label="{factory.translation.key('btn_yes')}" click="yes()" width="80" />
+		<mx:Button id="btnNo" label="{factory.translation.key('btn_no')}" click="no()" width="80" />
+		<mx:Spacer width="100%" />
+		<mx:Button label="{factory.translation.key('btn_cancel')}" click="cancel()" width="80" />
+	</mx:HBox>
+
+</mx:Panel>

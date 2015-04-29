@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" title="{aTitle}" minWidth="400" minHeight="200" alpha="1" borderAlpha="1"
+	paddingBottom="5" paddingLeft="5" paddingRight="5" paddingTop="5"
+	defaultButton="{btnOK}" >
+	
+	<mx:Metadata>
+		[Event("confirmation")]
+	</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			import com.prosteps.Dialogs;
+			import com.prosteps.Factory;
+			import mx.managers.PopUpManager;
+			
+			[Bindable] public var aTitle:String = '';
+			[Bindable] public var aMessage:String = '';
+			[Bindable] public var factory:Factory = Factory.instance;
+			
+			public function set type(value:String):void {
+				if(beeld == null) callLater(function():void{ type = value; });
+				else {
+					switch (value.toLowerCase()) {
+						case Dialogs.TYPE_WARNING:
+							beeld.source = Icons.warning_48;
+							break;
+						case Dialogs.TYPE_ERROR:
+							beeld.source = Icons.stop_48;
+							break;
+						case Dialogs.TYPE_HELP:
+							beeld.source = Icons.help_48;
+							break;
+						case Dialogs.TYPE_ABOUT:
+							beeld.source = Icons.about_48;
+							break;
+						case Dialogs.TYPE_UNKNOWN:
+						default :
+							beeld.source = Icons.unknown_48;
+					}
+				}
+			}
+			
+			private function confirm():void {
+				dispatchEvent(new Event("confirmation"));
+				PopUpManager.removePopUp(this);
+			}
+			
+			
+			
+			public function reset():void {
+				invalidateSize();
+				callLater(callLater,[callLater,[btnOK.setFocus]]);
+			}
+			
+			
+		]]>
+	</mx:Script>
+	
+	
+	
+	<mx:HBox width="100%" height="100%">
+		<mx:Image id="beeld" width="48" height="48" />
+		<mx:TextArea htmlText="{aMessage}" width="100%" height="100%" editable="false" borderThickness="0" color="#000000" />
+<!--		<mx:Label htmlText="{aMessage}" width="100%" height="100%" />-->
+	</mx:HBox>
+	<mx:HBox width="100%">
+		<mx:Spacer width="100%" />
+		<mx:Button id="btnOK" click="confirm()" 
+			label="{factory.translation.key('btn_ok') == null ? 'OK' : factory.translation.key('btn_ok')}" />
+	</mx:HBox>
+
+</mx:Panel>

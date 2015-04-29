@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" minHeight="40"
+	rollOver="onRollOver(event)" rollOut="onRollOut(event)" 
+	includeInLayout="{visible}"
+	backgroundColor="#EEEEEE" 
+	xmlns:com="com.*"
+	enabled="{view != ''}">
+	
+	<mx:Script>
+		<![CDATA[
+			
+			
+			[Bindable] public var image:Object;	//	can be a Class, or a String to a path
+			[Bindable] public var defaultImage:Object;
+			
+			[Bindable] public var view:String = '';	// on click, open this view
+			[Bindable] public var state:String = '';// when view is loaded, set this as currentstate 
+			
+			private var bgC:uint;
+			
+			private function onRollOver(event:Event):void {
+				bgC = getStyle('backgroundColor');
+				setStyle('backgroundColor', 0xCCCCCC);
+			}
+			private function onRollOut(event:Event):void {
+				setStyle('backgroundColor', bgC);
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:VBox width="100%" minHeight="40" verticalAlign="middle" horizontalAlign="center">
+		<mx:Image id="imgIcon" source="{image}" ioError="imgIcon.source = defaultImage;" />
+		<mx:Text selectable="false" htmlText="{label}" width="100%" textAlign="center"/>
+	
+	</mx:VBox>
+	
+	<com:NullImage id="img" />
+	
+</mx:Canvas>

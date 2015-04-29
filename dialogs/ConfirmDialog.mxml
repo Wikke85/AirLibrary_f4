@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" title="{aTitle}" minWidth="400" minHeight="120" 
+	alpha="1" borderAlpha="1" paddingLeft="5" paddingRight="5" paddingTop="5">
+	<mx:Metadata>
+		[Event("okEvent")]
+		[Event("cancelEvent")]
+	</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			import com.prosteps.Dialogs;
+			import com.prosteps.Factory;
+			import mx.managers.PopUpManager;
+			
+			[Bindable] public var aTitle:String = '';
+			[Bindable] public var aMessage:String = '';
+			[Bindable] public var aInternalMessage:String = '';
+			[Bindable] public var timeOut:int = 0;
+			[Bindable] public var factory:Factory = Factory.instance;
+			
+			private var enableTimer:Timer;
+			
+			public function set type(value:String):void {
+				if(beeld == null) callLater(function():void{ type = value; });
+				else {
+					switch (value.toLowerCase()) {
+						case Dialogs.TYPE_WARNING:
+							beeld.source = Icons.warning_48;
+							break;
+						case Dialogs.TYPE_ERROR:
+							beeld.source = Icons.stop_48;
+							break;
+						case Dialogs.TYPE_HELP:
+							beeld.source = Icons.help_48;
+							break;
+						case Dialogs.TYPE_ABOUT:
+							beeld.source = Icons.about_48;
+							break;
+						case Dialogs.TYPE_UNKNOWN:
+						default :
+							beeld.source = Icons.unknown_48;
+					}
+				}
+			}
+			
+			private function ok():void {
+				dispatchEvent(new Event("okEvent"));
+				PopUpManager.removePopUp(this);
+			}
+			private function cancel():void {
+				dispatchEvent(new Event("cancelEvent"));
+				PopUpManager.removePopUp(this);
+			}
+			
+			
+			public function reset():void {
+				btnOK.enabled = false;
+				if(enableTimer == null){
+					enableTimer = new Timer(timeOut * 1000, 1);
+					enableTimer.addEventListener(TimerEvent.TIMER, timerTick, false, 0.0, true);
+				}
+				enableTimer.start();
+				invalidateSize();
+				callLater(callLater,[callLater,[btnOK.setFocus]]);
+			}
+			
+			private function timerTick(event:TimerEvent):void {
+				btnOK.enabled = true;
+			}
+			
+		]]>
+	</mx:Script>
+	
+	
+	<mx:HBox width="100%" verticalAlign="middle">
+		<mx:Image id="beeld" width="48" height="48" />
+		<mx:Text selectable="false" htmlText="{aMessage}" width="100%" color="#000000" />
+	</mx:HBox>
+	
+	
+	<mx:HBox width="100%" >
+		<mx:Spacer width="100%" />
+		<mx:Button id="btnOK" label="{factory.translation.key('btn_ok')}" click="ok()" width="80" enabled="false"/>
+		<mx:Button label="{factory.translation.key('btn_cancel')}" click="cancel()" width="80" />
+	</mx:HBox>
+
+</mx:Panel>

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml">
+	
+	<mx:Metadata>
+		
+		[Style(name="innerBorderColor", type="uint", format="Color", inherit="no")]
+		//[Style(name="innerBorderSides", type="String", inherit="no")]
+		[Style(name="innerBorderSkin", type="Class", inherit="no")]
+		[Style(name="innerBorderStyle", type="String", enumeration="inset,outset,solid,none", inherit="no")]
+		[Style(name="innerBorderThickness", type="Number", format="Length", inherit="no")]
+		[Style(name="innerCornerRadius", type="Number", format="Length", inherit="no")]
+		
+		[Style(name="labelAlignment", type="String", enumeration="left,right,center", inherit="no")]
+
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.core.Application;
+			import mx.controls.RadioButton;
+			
+			private var _radioButtons:Array = [];
+			private var radioButtonsChanged:Boolean = false;
+			
+			[Bindable]
+			public function set radioButtons(value:Array):void {
+				_radioButtons = value;
+				radioButtonsChanged = true;
+				invalidateProperties();
+			}
+			public function get radioButtons():Array {
+				return _radioButtons;
+			}
+			
+			
+			private var _selectedValue:Object;
+			[Bindable("change")]
+			[Bindable("valueCommit")]
+			[Inspectable(category="General")]
+			
+			/**
+			 *  The value of the <code>value</code> property of the selected
+			 *  RadioButton control in the group, if this has been set
+			 *  to be something other than <code>null</code> (the default value).
+			 *  Otherwise, <code>selectedValue</code> is the value of the
+			 *  <code>label</code> property of the selected RadioButton.
+			 *  If no RadioButton is selected, this property is <code>null</code>.
+			 *
+			 *  <p>If you set <code>selectedValue</code>, Flex selects the
+			 *  RadioButton control whose <code>value</code> or
+			 *  <code>label</code> property matches this value.</p>
+			 *
+			 *  @default null
+			 */
+			public function get selectedValue():Object
+			{
+				return _selectedValue;
+			}
+			public function set selectedValue(value:Object):void
+			{
+				_selectedValue = value;
+				if(rbg != null) rbg.selectedValue = _selectedValue;
+			}
+			
+			
+			
+			override protected function commitProperties():void {
+				super.commitProperties();
+				
+				if(boxRbts != null){
+					if(radioButtonsChanged){
+						radioButtonsChanged = false;
+						boxRbts.removeAllChildren();
+						
+						for(var i:int = 0; i < _radioButtons.length; i++){
+							if(_radioButtons[i] != null){
+								boxRbts.addChild(_radioButtons[i] as RadioButton);
+								RadioButton(boxRbts.getChildAt(i)).groupName = 'rbg';
+							}
+						}
+					}
+					
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:RadioButtonGroup id="rbg" change="_selectedValue = rbg.selectedValue;" />
+	
+	<mx:VBox id="boxRbts" top="8" paddingTop="10" paddingLeft="5" left="2" right="2" bottom="2"
+		borderColor="{getStyle('innerBorderColor')}" borderStyle="{getStyle('innerBorderStyle')}" borderThickness="{getStyle('innerBorderThickness')}"
+		cornerRadius="{isNaN(getStyle('innerCornerRadius')) ? 0 : getStyle('innerCornerRadius')}">
+		
+		<!--
+		<mx:RadioButton groupName="rbg" label="" />
+		-->
+		
+	</mx:VBox>
+	
+	<mx:Box backgroundAlpha="1" backgroundColor="{getStyle('backgroundColor') == null ? parentApplication.getStyle('backgroundColor') : getStyle('backgroundColor')}" 
+		left="5" right="5" horizontalAlign="{getStyle('labelAlignment')}">
+		<mx:Label text="{label}" />
+	</mx:Box>
+	
+</mx:Canvas>

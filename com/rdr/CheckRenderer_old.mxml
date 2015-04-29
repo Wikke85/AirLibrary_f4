@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:HBox xmlns:mx="http://www.adobe.com/2006/mxml" implements="mx.controls.listClasses.IDropInListItemRenderer"
+	horizontalAlign="center" verticalAlign="middle" width="100%"
+	render="setImgVisible()" dataChange="setImgVisible()" 
+	>
+	
+	<mx:Script>
+		<![CDATA[
+			import images.ImgData16;
+			import mx.controls.listClasses.BaseListData;
+			
+			// Internal variable for the property value.
+			private var _listData:BaseListData;
+			
+			[Bindable] private var isChecked:Boolean = false;
+			
+			// Make the listData property bindable.
+			[Bindable("dataChange")]
+			
+			// Define the getter method.
+			public function get listData():BaseListData
+			{
+				return _listData;
+			}
+			
+			// Define the setter method,
+			public function set listData(value:BaseListData):void
+			{
+				_listData = value;
+				setImgVisible();
+			}
+			
+			[Bindable("dataChange")]
+			[Bindable("change")]
+			[Bindable("render")]
+			private function setImgVisible():void {
+				if(data == null){
+					//callLater(setImgVisible);
+				}
+				else {
+					
+					var field:Object = null;
+					
+					if( listData.hasOwnProperty('dataField') && data.hasOwnProperty(listData['dataField']) )
+					{
+						field = data[listData['dataField']];
+					}
+					if( field == null )
+					{
+						field = 'null';
+					}
+					
+					switch( field.toString().toLowerCase() )
+					{
+						case 'true':
+						case '1':
+							isChecked = true;
+							break;
+						
+						default:
+							isChecked = false;
+					}
+					
+					/*if(!isNaN(data[listData['dataField']])){
+						isChecked = data[listData['dataField']] == 1;
+					}
+					else {
+						isChecked = data[listData['dataField']].toString().toLowerCase() == 'true';
+					}*/
+					
+				}
+			}
+
+		]]>
+	</mx:Script>
+	
+	<mx:Image id="img" source="{ImgData16.check2}" visible="{isChecked}"/>
+	
+</mx:HBox>

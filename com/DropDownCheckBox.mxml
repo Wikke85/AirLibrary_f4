@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Button xmlns:mx="http://www.adobe.com/2006/mxml" width="150" icon="{iconMaximize}" height="20"
+	mouseUp="if(dropDown==null)toggleDD(); else closeDD();"
+	render="onRender()" creationComplete="onComplete()" labelPlacement="left" label=" "
+	textAlign="left" fontWeight="normal">
+	
+	<mx:Metadata>
+		[Event(name="change", type="flash.events.Event")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.events.FlexMouseEvent;
+			import mx.managers.PopUpManager;
+			
+			[Bindable] public var dataProvider:Array = [];
+			
+			public var separator:String = ',';
+			
+			public var labelField:String = 'label';
+			public var dataField:String = 'selected';
+			[Bindable] public var idField:String = '';
+			
+			[Bindable] public var rowCount:int = 10;
+			
+			[Embed(source="../images/spacer_minimize.png")]
+			[Bindable] private var iconMinimize:Class;
+			[Embed(source="../images/spacer_maximize.png")]
+			[Bindable] private var iconMaximize:Class;
+			
+			private var dropDown:DropDownCheckBoxList;
+			
+			//private var btnClick:Boolean = false;
+			private var open:Boolean = false;
+			
+			private function onRender():void {
+				var ret:Array = [];
+				for(var i:int=0; i<dataProvider.length; i++) if(dataProvider[i][dataField]) ret[ret.length] = dataProvider[i][idField];
+				//return ret.join(';');
+				label = ' '+ret.join(separator);
+			}
+			
+			public function get selectedLabels():String {
+				return (label==null || label==' ')?'':label.substr(1);//.split(separator).join('');
+			}
+			
+			private function onComplete():void {
+				onRender();
+			}
+			
+			public function get selectedItems():Array {
+				var ret:Array = [];
+				for(var i:int=0; i<dataProvider.length; i++) if(dataProvider[i][dataField]) ret[ret.length] = dataProvider[i];
+				return ret;
+			}
+			/*public function get lastSelectedItem():Object {
+				return new Object;
+			}*/
+			
+			
+			public function set selectedItems(items:Array):void {
+				for(var i:int=0; i<items.length; i++){
+					for(var j:int=0; j<dataProvider.length; j++){
+						if(dataProvider[j][labelField] == items[i][labelField]) {
+							dataProvider[j][dataField] = true;
+						}
+					}
+					/*if(dataProvider[i][labelField] == items[i][labelField]) {
+						dataProvider[i][dataField] = true;
+					}*/
+				}
+				onRender();
+			}
+			
+			public function set selectedItem(item:Object):void {
+				for(var i:int=0; i<dataProvider.length; i++){
+					if(dataProvider[i][labelField] == item[labelField]) {
+						dataProvider[i][dataField] = true;
+					}
+				}
+				onRender();
+			}
+			
+			
+			
+			/**
+			 * Set selected item through id value. requires 'idField' to be set
+			 */
+			public function get selectedIds():String {
+				var ret:Array = [];
+				for(var i:int=0; i<dataProvider.length; i++) if(dataProvider[i][dataField]) ret[ret.length] = dataProvider[i][idField];
+				return ret.join(separator);
+			}
+		
+		
+			public function clear():void {
+				for(var i:int=0; i<dataProvider.length; i++){
+					dataProvider[i][dataField] = false;
+				}
+				onRender();
+			}
+			public function selectAll():void {
+				for(var i:int=0; i<dataProvider.length; i++){
+					dataProvider[i][dataField] = true;
+				}
+				onRender();
+			}
+			
+			
+			private function toggleDD():void {
+				if(!open && dropDown == null){
+					//trace('btnClick 1 '+btnClick);
+					dropDown = DropDownCheckBoxList(PopUpManager.createPopUp(this, DropDownCheckBoxList, false, null));
+					
+					dropDown.addEventListener(
+						FlexMouseEvent.MOUSE_DOWN_OUTSIDE,
+						function(event:Event):void{callLater(closeDD);},
+						false, 0.0, true
+					);
+					dropDown.addEventListener(
+						FlexMouseEvent.MOUSE_WHEEL_OUTSIDE,
+						function(event:Event):void{callLater(closeDD);},
+						false, 0.0, true
+					);
+					dropDown.addEventListener(
+						'change',
+						function(event:Event):void{dispatchEvent(event);},
+						false, 0.0, true
+					);
+					
+					
+					dropDown.dataProvider = dataProvider;
+					dropDown.dataField = dataField;
+					dropDown.labelField = labelField;
+					dropDown.rowCount = rowCount;
+					
+					dropDown.width = this.width;
+					
+					
+					var point:Point = new Point(unscaledWidth - width /*- lbl.width - down.width*/ , height );
+					point = localToGlobal(point);
+					
+					point = dropDown.parent.globalToLocal(point);
+					
+					dropDown.scaleX = scaleX;
+					dropDown.scaleY = scaleY;
+					
+					var xVal:Number = point.x;
+					var yVal:Number = point.y;
+					
+					var screen:Rectangle = systemManager.screen;
+					
+					if (screen.width > dropDown.getExplicitOrMeasuredWidth() + point.x &&
+						screen.height < dropDown.getExplicitOrMeasuredHeight() + point.y)
+					{
+						xVal = point.x
+						yVal = point.y - dropDown.getExplicitOrMeasuredHeight();
+					}
+					else if (screen.width < dropDown.getExplicitOrMeasuredWidth() + point.x &&
+						screen.height < dropDown.getExplicitOrMeasuredHeight() + point.y)
+					{
+						xVal = point.x - dropDown.getExplicitOrMeasuredWidth() + width;
+						yVal = point.y - dropDown.getExplicitOrMeasuredHeight();
+					}
+					else if (screen.width < dropDown.getExplicitOrMeasuredWidth() + point.x &&
+						screen.height > dropDown.getExplicitOrMeasuredHeight() + point.y)
+					{
+						xVal = point.x - dropDown.getExplicitOrMeasuredWidth() + width;
+						yVal = point.y + unscaledHeight;
+					}
+					
+					dropDown.move(xVal, yVal);
+					Object(dropDown).setActualSize(dropDown.getExplicitOrMeasuredWidth(),dropDown.getExplicitOrMeasuredHeight());
+					
+					
+					
+					setStyle('icon',iconMinimize);
+					open = true;
+				}
+				/*else {
+					/*PopUpManager.removePopUp(dropDown);
+					onRender();
+					dropDown = null;
+					setStyle('icon',iconMaximize);* /
+					closeDD();
+				}*/
+			}
+			
+			private function closeDD():void {
+				//if(/*btnClick &&*/ dropDown != null){
+					//trace('btnClick 3 '+btnClick);
+					//open = false;
+					callLater(callLater,[callLater,[callLater,[callLater,[function():void{open = false;} ]]]]);
+					if(dropDown != null){
+						dropDown.removeEventListener(
+							FlexMouseEvent.MOUSE_DOWN_OUTSIDE,
+							function(event:Event):void{callLater(closeDD);}
+						);
+						dropDown.removeEventListener(
+							FlexMouseEvent.MOUSE_WHEEL_OUTSIDE,
+							function(event:Event):void{callLater(closeDD);}
+						);
+						dropDown.removeEventListener(
+							'change',
+							function(event:Event):void{dispatchEvent(event);}
+						);
+					}
+					PopUpManager.removePopUp(dropDown);
+					onRender();
+					dropDown = null;
+					setStyle('icon',iconMaximize);
+					//btnClick = false;
+				//}
+			}
+			
+			
+			
+		]]>
+	</mx:Script>
+</mx:Button>

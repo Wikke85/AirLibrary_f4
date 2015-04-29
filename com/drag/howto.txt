@@ -1,0 +1,4 @@
+<DragExcel dataGrid="{datagrid}"/>
+<DragBitmap displayObject="{displayobject}"/>
+
+<mx:DataGrid id="datagrid" allowdragselection="true"/>

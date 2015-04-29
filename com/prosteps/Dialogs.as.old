@@ -1,0 +1,174 @@
+package com.prosteps
+{
+	
+	import dialogs.ChoiseDialog;
+	import dialogs.ConfirmDialog;
+	import dialogs.InputDialog;
+	import dialogs.MessageDialog;
+	
+	import flash.display.DisplayObject;
+	import flash.events.Event;
+	
+	import mx.core.Application;
+	import mx.managers.PopUpManager;
+	
+	
+	[Bindable]
+	public class Dialogs
+	{
+		public function Dialogs()
+		{
+			
+		}
+		
+		
+		public static var _dialogs:Dialogs;
+		public static function get instance():Dialogs {
+			if(_dialogs == null){
+				_dialogs = new Dialogs;
+			}
+			return _dialogs;
+		}
+		
+		
+		public static const TYPE_WARNING:	String = 'warning';
+		public static const TYPE_ERROR:		String = 'error';
+		public static const TYPE_HELP:		String = 'help';
+		public static const TYPE_INFO:		String = 'info';
+		public static const TYPE_ABOUT:		String = 'about';
+		public static const TYPE_UNKNOWN:	String = 'unknown';
+		
+		//ok-cancel
+		private var _dlgConfirm:ConfirmDialog;
+		private var _okHandlerFunction:Function;
+		private var _cancelHandlerFunction:Function;
+		
+		//yes-no-cancel
+		private var _dlgChoise:ChoiseDialog;
+		private var _yesChoiseFunction:Function;
+		private var _noChoiseFunction:Function;
+		private var _cancelChoiseFunction:Function;
+		
+		//input
+		private var _dlgInput:InputDialog;
+		private var _inputHandlerFunction:Function;
+		
+		
+		/* Message 'OK' */
+		public function message(messageString:String, title:String = 'Message', type:String = 'INFO'): void {
+			var _dlgMessage:MessageDialog = PopUpManager.createPopUp(DisplayObject(Application.application), MessageDialog, true) as MessageDialog;
+			_dlgMessage.aTitle = title;
+			_dlgMessage.aMessage = messageString;
+			_dlgMessage.type = type;
+			PopUpManager.centerPopUp(_dlgMessage);
+			_dlgMessage.reset();
+		}
+		
+		/* ErrorMessage 'OK' */
+		public function error(messageString:String, title:String = 'Error'): void {
+			message(messageString, title, 'error');
+		}
+		
+		/* Message 'OK','Cancel' */
+		public function msgOkCancel(messageString:String, title:String, okHandler:Function, cancelHandler:Function = null, enabledTimeOut:int = 0): void {
+			_okHandlerFunction = okHandler;
+			_cancelHandlerFunction = cancelHandler;
+			
+			if(_dlgConfirm == null){
+				_dlgConfirm = new ConfirmDialog;
+			}
+			
+			PopUpManager.addPopUp(_dlgConfirm, DisplayObject(Application.application), true, null);
+			_dlgConfirm.aTitle = title;
+			_dlgConfirm.timeOut = enabledTimeOut;
+			_dlgConfirm.aMessage = messageString;
+			_dlgConfirm.type = TYPE_HELP;
+			PopUpManager.centerPopUp(_dlgConfirm);
+			_dlgConfirm.reset();
+			
+			_dlgConfirm.addEventListener('okEvent', okHandlerInternal, false, 0.0, true);
+			if(cancelHandler != null) _dlgConfirm.addEventListener('cancelEvent', cancelHandlerInternal, false, 0.0, true);
+		}
+		private function okHandlerInternal(event:Event):void {
+			_dlgConfirm.removeEventListener('okEvent', okHandlerInternal);
+			_dlgConfirm.removeEventListener('cancelEvent', cancelHandlerInternal);
+			_okHandlerFunction();
+		}
+		private function cancelHandlerInternal(event:Event):void {
+			_dlgConfirm.removeEventListener('okEvent', okHandlerInternal);
+			_dlgConfirm.removeEventListener('cancelEvent', cancelHandlerInternal);
+			_cancelHandlerFunction();
+		}
+		
+		/* Message 'Yes','No','Cancel' */
+		public function msgYesNoCancel(messageString:String, title:String, yesHandler:Function=null, noHandler:Function=null, cancelHandler:Function=null):void {
+			_yesChoiseFunction = yesHandler;
+			_noChoiseFunction = noHandler;
+			_cancelChoiseFunction = cancelHandler;
+			
+			if(_dlgChoise == null){
+				_dlgChoise = new ChoiseDialog;
+			}
+			
+			PopUpManager.addPopUp(_dlgChoise, DisplayObject(Application.application), true, null);
+			_dlgChoise.aTitle = title;
+			_dlgChoise.aMessage = messageString;
+			_dlgChoise.type = TYPE_HELP;
+			PopUpManager.centerPopUp(_dlgChoise);
+			_dlgChoise.reset();
+			
+			if(yesHandler != null)		_dlgChoise.addEventListener('yesEvent', yesnoHandler1, false, 0.0, true);
+			if(noHandler != null)		_dlgChoise.addEventListener('noEvent', yesnoHandler2, false, 0.0, true);
+			if(cancelHandler != null)	_dlgChoise.addEventListener('cancelEvent', yesnoHandler3, false, 0.0, true);
+		}
+		private function yesnoHandler1(event:Event):void {
+			_dlgChoise.removeEventListener('yesEvent', yesnoHandler1);
+			_dlgChoise.removeEventListener('noEvent', yesnoHandler2);
+			_dlgChoise.removeEventListener('cancelEvent', yesnoHandler3);
+			_yesChoiseFunction(event);
+		}
+		private function yesnoHandler2(event:Event):void {
+			_dlgChoise.removeEventListener('yesEvent', yesnoHandler1);
+			_dlgChoise.removeEventListener('noEvent', yesnoHandler2);
+			_dlgChoise.removeEventListener('cancelEvent', yesnoHandler3);
+			_noChoiseFunction(event);
+		}
+		private function yesnoHandler3(event:Event):void {
+			_dlgChoise.removeEventListener('yesEvent', yesnoHandler1);
+			_dlgChoise.removeEventListener('noEvent', yesnoHandler2);
+			_dlgChoise.removeEventListener('cancelEvent', yesnoHandler3);
+			_cancelChoiseFunction(event);
+		}
+		
+		
+		/* Message with text input */
+		public function msgInput(messageString:String, title:String, inputHandler:Function, previousValue:String='', validate:String='text', minimum:Number=0, maximum:Number=0): void {
+			_inputHandlerFunction = inputHandler;
+			
+			if(_dlgInput == null){
+				_dlgInput = new InputDialog;
+			}
+			
+			PopUpManager.addPopUp(_dlgInput, DisplayObject(Application.application), true, null);
+			_dlgInput.aTitle = title;
+			_dlgInput.aMessage = messageString;
+			_dlgInput.minimum = minimum;
+			_dlgInput.maximum = maximum;
+			_dlgInput.validate = validate;
+			_dlgInput.edt.text = previousValue;
+			_dlgInput.type = TYPE_UNKNOWN;
+			PopUpManager.centerPopUp(_dlgInput);
+			_dlgInput.reset();
+			
+			_dlgInput.addEventListener('okEvent', inputHandlerInternal, false, 0.0, true);
+		}
+		private function inputHandlerInternal(event:Event):void {
+			_dlgInput.removeEventListener('okEvent', inputHandlerInternal);
+			_inputHandlerFunction( event.target.aText );
+		}
+		
+		
+		
+		
+	}
+}

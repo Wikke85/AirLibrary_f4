@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:HBox xmlns:mx="http://www.adobe.com/2006/mxml" width="100%"
+	horizontalAlign="right" verticalAlign="middle">
+	
+	<mx:Metadata>
+		[Event(name="okClick", type="flash.events.Event")]
+		[Event(name="cancelClick", type="flash.events.Event")]
+		[Event(name="closeClick", type="flash.events.Event")]
+		[Event(name="saveClick", type="flash.events.Event")]
+		[Event(name="yesClick", type="flash.events.Event")]
+		[Event(name="noClick", type="flash.events.Event")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import utils.ValidationUtils;
+			
+			private var _mode:String = 'none';
+			
+			[Inspectable(category="General", enumeration="none,ok_cancel,ok,yes_no,yes_no_cancel,close,save_cancel", defaultValue="none")]
+			public function set mode(value:String):void {
+				_mode = value == null ? 'none' : value;
+				invalidateButtons();
+			}
+			public function get mode():String {
+				return _mode;
+			}
+			
+			[Bindable] public var showIndicator:Boolean = false;
+			
+			private function invalidateButtons():void {
+				if(btnCancel && btnClose && btnNo && btnOk && btnSave && btnYes){
+					btnCancel.visible = 
+					btnClose.visible = 
+					btnNo.visible = 
+					btnOk.visible = 
+					btnSave.visible = 
+					btnYes.visible = 
+					
+					btnCancel.includeInLayout = 
+					btnClose.includeInLayout = 
+					btnNo.includeInLayout = 
+					//btnOk.includeInLayout = 
+					btnSave.includeInLayout = 
+					btnYes.includeInLayout = 
+					
+						false;
+					
+					switch(_mode.toLowerCase()){
+						
+						case 'ok_cancel':
+							btnCancel.visible = btnCancel.includeInLayout = true;
+						case 'ok':
+							btnOk.visible = /*btnOk.includeInLayout =*/ true;
+							break;
+						
+						case 'yes_no_cancel':
+							btnCancel.visible = btnCancel.includeInLayout = true;
+						case 'yes_no':
+							btnYes.visible = btnCancel.includeInLayout = true;
+							btnNo.visible = btnNo.includeInLayout = true;
+							break;
+						
+						case 'close':
+							btnClose.visible = btnClose.includeInLayout = true;
+							break;
+						
+						case 'save_cancel':
+							btnSave.visible = btnSave.includeInLayout = true;
+							btnCancel.visible = btnCancel.includeInLayout = true;
+							break;
+						
+					}
+				}
+				else {
+					callLater(invalidateButtons);
+				}
+			}
+			
+			private function _click(type:String):void {
+				dispatchEvent(new Event(type+'Click'));
+			}
+			
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Label htmlText="{ValidationUtils.REQUIRED_INDICATOR}: Required fields" visible="{showIndicator}"/>
+	
+	<mx:Spacer width="100%"/>
+	
+	<mx:Button id="btnOk" label="OK" visible="false" click="_click('ok')" minWidth="60"/>
+	<mx:Button id="btnCancel" label="Cancel" visible="false" includeInLayout="false" click="_click('cancel')" minWidth="60"/>
+	<mx:Button id="btnClose" label="Close" visible="false" includeInLayout="false" click="_click('close')" minWidth="60"/>
+	<mx:Button id="btnSave" label="Save" visible="false" includeInLayout="false" click="_click('save')" minWidth="60"/>
+	<mx:Button id="btnYes" label="Yes" visible="false" includeInLayout="false" click="_click('yes')" minWidth="60"/>
+	<mx:Button id="btnNo" label="No" visible="false" includeInLayout="false" click="_click('no')" minWidth="60"/>
+	
+</mx:HBox>

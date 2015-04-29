@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" title="{aTitle}" minWidth="400" minHeight="150" 
+	alpha="1" borderAlpha="1" paddingLeft="5" paddingRight="5" paddingTop="5" paddingBottom="5">
+	
+	<mx:Metadata>
+		[Event("okEvent")]
+		[Event("cancelEvent")]
+	</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			import com.prosteps.Dialogs;
+			import com.prosteps.Factory;
+			import mx.managers.PopUpManager;
+			
+			[Bindable] public var aTitle:String = '';
+			[Bindable] public var aMessage:String = '';
+			[Bindable] public var aInternalMessage:String = '';
+			[Bindable] public var factory:Factory = Factory.instance;
+			
+			public var aText:String = '';
+			
+			public function set type(value:String):void {
+				if(beeld == null) callLater(function():void{ type = value; });
+				else {
+					switch (value.toLowerCase()) {
+						case Dialogs.TYPE_WARNING:
+							beeld.source = Icons.warning_48;
+							break;
+						case Dialogs.TYPE_ERROR:
+							beeld.source = Icons.stop_48;
+							break;
+						case Dialogs.TYPE_HELP:
+							beeld.source = Icons.help_48;
+							break;
+						case Dialogs.TYPE_ABOUT:
+							beeld.source = Icons.about_48;
+							break;
+						case Dialogs.TYPE_UNKNOWN:
+						default :
+							beeld.source = Icons.unknown_48;
+					}
+				}
+			}
+			
+			/* minimum/maximum values possible for when validate = float or int */
+			public var minimum:Number = 0;
+			public var maximum:Number = 100;
+			
+			private var _validate:String = 'text';
+			
+			//[Bindable]
+			[Inspectable(category="General", enumeration="text,textonly,alphanumeric,hex,float,int,date,email", defaultValue="text")]
+			public function set validate(value:String):void {
+				_validate = value;
+				switch(_validate){
+					case 'float':
+						edt.restrict = '\-0-9\.,';
+						break;
+					
+					case 'int':
+						edt.restrict = '\-0-9';
+						break;
+					
+					case 'textonly':
+						edt.restrict = 'a-zA-Z ';
+						break;
+					
+					case 'alphanumeric':
+						edt.restrict = 'a-zA-Z0-9 ';
+						break;
+					
+					case 'hex':
+						edt.restrict = 'a-fA-F0-9 ';
+						break;
+					
+					case 'date':
+						edt.restrict = '0-9 /\-';
+						break;
+					
+					case 'text':
+					default:
+						
+				}
+			}
+			
+			private function ok():void {
+				aText = edt.text;
+				
+				switch(_validate){
+					case 'date':
+						
+						break;
+					
+					case 'email':
+						
+						break;
+					
+					default:
+						
+				}
+				
+				dispatchEvent(new Event("okEvent"));
+				PopUpManager.removePopUp(this);
+			}
+			private function cancel():void {
+				dispatchEvent(new Event("cancelEvent"));
+				PopUpManager.removePopUp(this);
+			}
+			
+			
+			public function reset():void {
+				//edt.text = '';
+				invalidateSize();
+				callLater(callLater,[callLater,[edt.setFocus]]);
+			}
+			
+			private function onKeyUp(event:KeyboardEvent) :void {
+				if(event.keyCode == 13)			ok();		//ENTER
+				else if(event.keyCode == 27)	cancel();	//ESC
+				else {
+					switch(_validate){
+						case 'float':
+							var t:String = edt.text.split(',').join('.');
+							
+							if(t.indexOf('-') != -1){
+								t = '-' + t.split('-').join('');
+							}
+							
+							var firstDotIndex:int = t.indexOf('.');
+							var lastDotIndex:int = t.lastIndexOf('.');
+							
+							if(firstDotIndex < lastDotIndex){
+								var t1:String = t.substring(0,lastDotIndex-1);
+								var t2:String = t.substring(lastDotIndex+1);
+								
+								edt.text = t1.split('.').join('') + '.' + t2;
+							}
+							else {
+								edt.text = t;
+							}
+							
+							if(minimum < maximum){
+								if(Number(edt.text) > maximum) edt.text = maximum.toString();
+								if(Number(edt.text) < minimum) edt.text = minimum.toString();
+							}
+							break;
+						
+						case 'int':
+							if(edt.text.indexOf('-') != -1){
+								edt.text = '-' + edt.text.split('-').join('');
+							}
+							if(minimum < maximum){
+								if(Number(edt.text) > maximum) edt.text = maximum.toString();
+								if(Number(edt.text) < minimum) edt.text = minimum.toString();
+							}
+							break;
+							
+						default:
+					}
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	
+	
+	<mx:HBox width="100%" height="100%">
+		<mx:Image id="beeld" width="48" height="48" />
+		<mx:VBox width="100%" height="100%">
+			<mx:Spacer height="100%" />
+			<mx:Text selectable="false" htmlText="{aMessage}" width="100%" color="#000000" />
+			<mx:Spacer height="100%" />
+			<mx:TextInput id="edt" width="100%" keyUp="onKeyUp(event)" />
+			<mx:Spacer height="100%" />
+		</mx:VBox>
+	</mx:HBox>
+	
+	
+	<mx:HBox width="100%">
+		<mx:Spacer width="100%" />
+		<mx:Button id="btnOK" label="{factory.translation.key('btn_ok')}" click="ok()" width="80" />
+		<mx:Button label="{factory.translation.key('btn_cancel')}" click="cancel()" width="80" />
+	</mx:HBox>
+
+</mx:Panel>

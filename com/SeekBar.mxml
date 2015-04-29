@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:HBox xmlns:mx="http://www.adobe.com/2006/mxml" width="100" height="10">
+	
+	<mx:Metadata>
+		[Event(name="seekRollOver", type="flash.events.Event")]
+		[Event(name="seekRollOut", type="flash.events.Event")]
+		[Event(name="seekClick", type="flash.events.MouseEvent")]
+		
+		//style colours
+		
+		[Style(name="loaderColor", type="uint", format="Color", inherit="yes")]
+		[Style(name="playerColor", type="uint", format="Color", inherit="yes")]
+		
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			
+			[Bindable] public var bytesLoaded:Number = 0;
+			[Bindable] public var bytesTotal:Number = 0;
+			
+			[Bindable] public var playheadTime:Number = 0;
+			[Bindable] public var totalTime:Number = 0;
+			
+			[Bindable] public var loaderAlpha:Number = 0.6;
+			[Bindable] public var playerAlpha:Number = 1;
+			
+			[Bindable] private var _btnMode:Boolean = true;
+			
+			override public function set buttonMode(value:Boolean):void {
+				super.buttonMode = value;
+				_btnMode = value;
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<!-- progress bar for playtime, loading time -->
+	
+	<mx:Canvas id="cnvParent" width="100%" height="10" buttonMode="{_btnMode}"
+		mouseMove="dispatchEvent(new Event('seekRollOver'));"
+		rollOut="dispatchEvent(new Event('seekRollOut'));" 
+		click="dispatchEvent(new MouseEvent('seekClick', event.bubbles,event.cancelable, event.localX, event.localY, 
+			event.relatedObject, event.ctrlKey, event.altKey, event.shiftKey, event.buttonDown, event.delta, 
+			event.commandKey, event.controlKey, event.clickCount));">
+		
+		<mx:Canvas id="cnvLoaded" backgroundColor="{getStyle('loaderColor')}" height="100%" alpha="{loaderAlpha}"
+			width="{(bytesLoaded/bytesTotal) * cnvParent.width}" />
+		
+		<mx:Canvas id="cnvPlayed" backgroundColor="{getStyle('playerColor')}" alpha="{playerAlpha}"
+			width="{Math.abs( (playheadTime/totalTime) * cnvParent.width )}" height="100%" />
+		
+	</mx:Canvas>
+	
+</mx:HBox>

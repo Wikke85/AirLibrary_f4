@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<core:WindowXT xmlns:core="core.*" xmlns:mx="http://www.adobe.com/2006/mxml" layout="vertical" 
+	minWidth="400" minHeight="120" priority="1200"
+	paddingLeft="5" paddingRight="5" paddingBottom="5" paddingTop="5" 
+	xmlns:com="com.*"
+	
+	maximizable="false" minimizable="false" resizable="true" transparent="false"
+	systemChrome="{NativeWindowSystemChrome.STANDARD}" type="utility"
+	alwaysInFront="true" showStatusBar="false" 
+	
+	closing="event.preventDefault(); event.stopImmediatePropagation(); visible = false;" 
+	>
+	
+	<mx:Metadata>
+		[Event("choice1Event")]
+		[Event("choice2Event")]
+		[Event("cancelEvent")]
+	</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			import com.prosteps.Dialog;
+			
+			[Bindable] public var choise1:String = 'Yes';
+			[Bindable] public var choise2:String = 'No';
+			[Bindable] public var message:String = '';
+			
+			
+			public function set messageType(value:String):void {
+				if(beeld == null) callLater(function():void{ messageType = value; });
+				else {
+					switch (value.toLowerCase()) {
+						case Dialog.TYPE_WARNING:
+							beeld.source = Icons.warning_48;
+							break;
+						case Dialog.TYPE_ERROR:
+							beeld.source = Icons.error_48;
+							break;
+						case Dialog.TYPE_HELP:
+							beeld.source = Icons.help_48;
+							break;
+						case Dialog.TYPE_INFO:
+							beeld.source = Icons.information_48;
+							break;
+						case Dialog.TYPE_ABOUT:
+							beeld.source = Icons.about_48;
+							break;
+						case Dialog.TYPE_UNKNOWN:
+						default :
+							beeld.source = Icons.unknown_48;
+					}
+				}
+			}
+			
+			private function doChoice1():void {
+				dispatchEvent(new Event("choice1Event"));
+				callLater(closeMe);
+			}
+			private function doChoice2():void {
+				dispatchEvent(new Event("choice2Event"));
+				callLater(closeMe);
+			}
+			private function cancel():void {
+				dispatchEvent(new Event("cancelEvent"));
+				callLater(closeMe);
+			}
+			
+			
+			public function reset():void {
+				/*visible = true;
+				stage.nativeWindow.orderToFront();
+				
+				callLater(regetFocus,[null]);*/
+				
+				txt.htmlText = message;
+				btn1.label = choise1;
+				btn2.label = choise2;
+				
+				invalidateSize();
+				//callLater(callLater,[callLater,[btnOK.setFocus]]);
+			}
+			
+			private function closeMe():void {
+				close();
+			}
+			
+		]]>
+	</mx:Script>
+	
+	
+	<mx:HBox width="100%" verticalAlign="middle">
+		<mx:Image id="beeld" width="48" height="48" />
+		<mx:Text id="txt" selectable="false" width="100%" color="#000000" alpha="1"/>
+	</mx:HBox>
+	
+	
+	<mx:HBox width="100%">
+		<mx:Button id="btn1" click="doChoice1()"/>
+		<mx:Button id="btn2" click="doChoice2()"/>
+		<mx:Spacer width="100%" />
+		<mx:Button label="Cancel" click="cancel()" width="60" />
+	</mx:HBox>
+
+</core:WindowXT>
